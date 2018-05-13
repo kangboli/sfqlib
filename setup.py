@@ -10,7 +10,7 @@ setup(
     package_data={'sfqlib': ['euler.pdf'], },
     url='https://github.com/hannoeichel/sfqlib',
     keywords=['SFQ', 'Control'],
-    install_requires=['numpy', 'scipy', 'unittest', ],
+    install_requires=['numpy', 'scipy', ],
     license='MIT',
     classifiers=[],
 )
