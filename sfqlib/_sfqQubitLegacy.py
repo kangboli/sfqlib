@@ -1,7 +1,7 @@
 from scipy.linalg import expm
 from numpy import array, complex64, sqrt, pi, \
     absolute, exp, dot, angle, cos, sin, conj
-from euler_angle import decompose_euler
+from sfqlib.euler_angle import decompose_euler
 
 
 class SfqSequence():

@@ -12,7 +12,7 @@ __status__ = "Beta"
 from scipy.linalg import expm
 from numpy import array, complex64, sqrt, pi, \
     absolute, exp, dot, angle, cos, sin, conj
-from euler_angle import decompose_euler
+from sfqlib.euler_angle import decompose_euler
 
 
 class SfqSequence():
@@ -26,11 +26,8 @@ class SfqSequence():
         """
         self.decimal = sequence_dec
         self.length = length
+        self.fidelity = 0
         self.qubit = None
-
-    @property
-    def fidelity(self):
-        return self.qubit.measure_fidelity()
 
     @property
     def binary(self):

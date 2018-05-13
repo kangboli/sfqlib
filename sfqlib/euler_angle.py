@@ -5,7 +5,7 @@ from numpy import conj, absolute, arccos, log, pi, exp, cos, sin, array, angle
 class NotUnimodularException(Exception):
     """Raised when attempt to decompose a non-unimodular 2x2 matrix"""
     def __init__(self, d, *args, **kwargs):
-        print d
+        print(d)
         Exception.__init__(self, *args, **kwargs)
 
 

@@ -1,6 +1,6 @@
-from sfqQubit import SfqSequence, SfqQubit, Sfq3LevelQubit,\
+from sfqlib.sfqQubit import SfqSequence, SfqQubit, Sfq3LevelQubit,\
     Sfq2LevelQubit, Sfq2LevelEulerQubit, Sfq3LevelEulerQubit
-from euler_angle import decompose_euler
+from sfqlib.euler_angle import decompose_euler
 
 __all__ = ['SfqSequence', 'SfqQubit', 'Sfq3LevelQubit',
            'Sfq2LevelQubit', 'Sfq2LevelEulerQubit',
