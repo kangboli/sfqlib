@@ -6,8 +6,9 @@ setup(
     description='Tools for SFQ research',
     author='Kangbo Li',
     author_email='kli89@wisc.edu',
-    url='https://github.com/hannoeichel/mypackage',
+    url='https://github.com/hannoeichel/sfqlib',
     keywords=['SFQ', 'Control'],
+    install_requires=['numpy', 'scipy', 'unittest'],
     license='MIT',
     classifiers=[],
 )

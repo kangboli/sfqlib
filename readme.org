@@ -2,9 +2,12 @@
 #+TITLE: SFQ Library
 #+AUTHOR: Kangbo
 * sfqQubt
+  Tools for SFQ research.
+** Installation
+   pip install sfqlib
 ** Create a qubit
    A qubit is defined by 
-   + Qubit frequency (both $w_{01}$ and $w_{12}$)
+   + Qubit frequency (both w_{01} and w_{12})
    + Clock frequency.
    + Rotation induced by a single SFQ pulse.
    + Target rotation, against which we define the infidelity.
@@ -21,11 +24,11 @@
 ** Create a Sequence
    A sequence can be created as a bit string.
    Each bit corresponds to a clock edge, 
-   where $1$ means applying a SFQ pulse,
-   and $0$ means not applying a SFQ pulse at the clock edge.
+   where 1 means applying a SFQ pulse,
+   and 0 means not applying a SFQ pulse at the clock edge.
 *** SfqSequence
     a class *sfqsequence* is provided for decimal to binary conversion.
-    for example, one can create the bit pattern $[1, 0, 0, 0]$ like the following.
+    for example, one can create the bit pattern [1, 0, 0, 0] like the following.
     #+BEGIN_SRC python
     sequence = sfqsequence(8, 4).binary
     #+END_SRC
@@ -38,7 +41,7 @@
    #+BEGIN_SRC python
    qubit.pulse_pattern(pattern, sequence.binary):
    #+END_SRC
-   As another example, to try all possible sequences of $n$ bits long.
+   As another example, to try all possible sequences of n bits long.
    #+BEGIN_SRC python
     def search_sequences_of_length(self, n):
         def try_sequence(sequence_num):
