@@ -1,0 +1,55 @@
+#+OPTIONS: toc:nil
+#+TITLE: SFQ Library
+#+AUTHOR: Kangbo
+* sfqQubt
+** Create a qubit
+   A qubit is defined by 
+   + Qubit frequency (both $w_{01}$ and $w_{12}$)
+   + Clock frequency.
+   + Rotation induced by a single SFQ pulse.
+   + Target rotation, against which we define the infidelity.
+   For example, to create a 3 level qubit.
+   #+BEGIN_SRC python
+   qubit = Sfq3LevelQubit(d_theta=pi/200, w_clock=2*pi*5e9,
+        w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
+   #+END_SRC
+   Other options for qubits include:
+   + Sfq3LevelQubit
+   + Sfq2LevelQubit
+   + Sfq3LevelEulerQubit
+   + Sfq2LevelEulerQubit
+** Create a Sequence
+   A sequence can be created as a bit string.
+   Each bit corresponds to a clock edge, 
+   where $1$ means applying a SFQ pulse,
+   and $0$ means not applying a SFQ pulse at the clock edge.
+*** SfqSequence
+    a class *sfqsequence* is provided for decimal to binary conversion.
+    for example, one can create the bit pattern $[1, 0, 0, 0]$ like the following.
+    #+BEGIN_SRC python
+    sequence = sfqsequence(8, 4).binary
+    #+END_SRC
+    this is convinent for enumerating sequences. 
+    #+BEGIN_SRC python
+    [sfqsequence(i, 10) for i in range(pow(2, 10))]
+    #+END_SRC
+** Evolve a qubit
+   To apply a sequence to a qubit.
+   #+BEGIN_SRC python
+   qubit.pulse_pattern(pattern, sequence.binary):
+   #+END_SRC
+   As another example, to try all possible sequences of $n$ bits long.
+   #+BEGIN_SRC python
+    def search_sequences_of_length(self, n):
+        def try_sequence(sequence_num):
+            qubit = self.Sfq3LevelQubit(
+                d_theta=self.d_theta_n/n, w_clock=self.w_clock,
+                w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
+            sequence = SfqSequence(sequence_num, n)
+            qubit.pulse_pattern(sequence.binary)
+            sequence.fidelity = qubit.measure_fidelity()
+            return sequence
+        all_seq_of_length_n = [try_sequence(sequence_num)
+                               for sequence_num in range(pow(2, n))]
+        return all_seq_of_length_n
+   #+END_SRC
