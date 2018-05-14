@@ -106,7 +106,7 @@ class SfqQubit(object):
             else:
                 self.precess()
 
-    def ideal_rotation(self, ket):
+    def _ideal_rotation(self, ket):
         """
         Rotate the pauli states according to the ideal y-rotation.
         Implement in subclasses.
@@ -138,16 +138,14 @@ class Sfq3LevelQubit(SfqQubit):
                           [0.0, exp(-1.0j * self.d_phi), 0.0],
                           [0.0, 0.0, exp(-1.0j * self.d_phi3)]],
                          dtype=complex64)
-        self.usfq = expm(array(self.d_theta/2.0*(a-a_dag),
+        qubit.measure_fidelity()self.usfq = expm(array(self.d_theta/2.0*(a-a_dag),
                                dtype=complex64))
         self.kets = [self.pauli_kets[key] for key in self.order]
         self.r_kets = [self.ideal_rotation(self.pauli_kets[key])
                        for key in self.order]
 
-    def measure_fidelity(self, ignore_phase=False, ignore_leakage=False):
+    def measure_fidelity(self, ignore_leakage=False):
         kets, r_kets = self.kets, self.r_kets
-        if ignore_phase:
-            kets = absolute(kets) * exp(1j * angle(r_kets))
         if ignore_leakage:
             kets = [[ket[0], ket[1], 0] for ket in kets]
             r_kets = [[r_ket[0], r_ket[1], 0] for r_ket in r_kets]
