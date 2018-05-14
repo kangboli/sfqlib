@@ -86,9 +86,11 @@ class SfqQubit(object):
     def _pulse(self):
         self.kets = [dot(self.usfq, ket) for ket in self.kets]
 
+    """
     def __getattr__(self, attr):
         loc = [i for i, x in enumerate(self.order) if x == attr]
         return self.kets[loc[0]] if loc else None
+   """
 
     def resonance(self):
         """Resonance pulse sequence. The pulses are spaced by d_phi
