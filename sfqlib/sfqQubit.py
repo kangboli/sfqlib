@@ -76,23 +76,28 @@ class SfqQubit(object):
     def pulse_and_precess(self):
         """Rotate the qubit for d_theta around y-axes,
         followed by precession for one clock period."""
-        self.kets = [dot(self.usfq, ket) for ket in self.kets]
-        for i in range(self.resonance_times):
-            self.precess()
+        self._pulse()
+        self.precess()
 
     def measure_fidelity():
         """Measure the fidelity. Implement in subclasses."""
         pass
+
+    def _pulse(self):
+        self.kets = [dot(self.usfq, ket) for ket in self.kets]
 
     def __getattr__(self, attr):
         loc = [i for i, x in enumerate(self.order) if x == attr]
         return self.kets[loc[0]] if loc else None
 
     def resonance(self):
-        """Resonance pulse sequence. The pulses are spaced by d_phi"""
+        """Resonance pulse sequence. The pulses are spaced by d_phi
+        TODO TEST RESONANCE"""
         num_steps = self.theta / self.d_theta
         for step in range(int(num_steps)):
             self.pulse_and_precess()
+            for i in range(self.resonance_times-1):
+                self.precess()
 
     def pulse_pattern(self, pattern):
         """
@@ -138,7 +143,7 @@ class Sfq3LevelQubit(SfqQubit):
                           [0.0, exp(-1.0j * self.d_phi), 0.0],
                           [0.0, 0.0, exp(-1.0j * self.d_phi3)]],
                          dtype=complex64)
-        qubit.measure_fidelity()self.usfq = expm(array(self.d_theta/2.0*(a-a_dag),
+        self.usfq = expm(array(self.d_theta/2.0*(a_dag-a),
                                dtype=complex64))
         self.kets = [self.pauli_kets[key] for key in self.order]
         self.r_kets = [self.ideal_rotation(self.pauli_kets[key])
@@ -181,7 +186,7 @@ class Sfq2LevelQubit(SfqQubit):
                          dtype=complex64)
         a = array([[0.0, 1.0], [0.0, 0.0]], dtype=complex64)
         a_dag = array([[0.0, 0.0], [1.0, 0.0]], dtype=complex64)
-        self.usfq = expm(array(self.d_theta/2.0*(a-a_dag), dtype=complex64))
+        self.usfq = expm(array(self.d_theta/2.0*(a_dag-a), dtype=complex64))
         self.kets = [self.pauli_kets[key] for key in self.order]
         self.r_kets = [self.ideal_rotation(self.pauli_kets[key])
                        for key in self.order]

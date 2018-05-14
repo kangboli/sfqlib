@@ -27,16 +27,15 @@
     For example, to create a 3 level qubit.
     #+BEGIN_SRC python
     qubit = Sfq3LevelQubit(d_theta=pi/200, w_clock=2*pi*5e9,
-          w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
+          w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
     #+END_SRC
-
 ** Qubit Evolution.
 *** Evolve a qubit
     We can do three basic things on a qubit.
     Suppose that we created a qubit
     #+BEGIN_SRC python
     qubit = Sfq3LevelQubit(d_theta=pi/200, w_clock=2*pi*5e9,
-          w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
+          w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
     #+END_SRC
 **** Precess
      We can precess the qubit for one clock period.
