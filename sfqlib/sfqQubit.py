@@ -13,7 +13,7 @@ from scipy.linalg import expm
 from numpy import array, complex64, sqrt, pi, \
     absolute, exp, dot, angle, cos, sin, conj
 from sfqlib.euler_angle import decompose_euler
-
+from copy import deepcopy
 
 class SfqSequence():
     def __init__(self, sequence_dec, length):
@@ -51,6 +51,9 @@ class SfqSequence():
 
 
 class SfqQubit(object):
+    g, e, p, p_i, m, m_i = None, None, None, None ,None, None
+    s_kets = [g, e, m, m_i, p, p_i]
+    a, a_dag = None, None
     """Qubit controlled by SFQ pulses. This class is to be subclassed."""
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
@@ -62,16 +65,25 @@ class SfqQubit(object):
         Leakage level frequency)
         :param float theta: Total rotation.
         """
+        self.usfq, self.ufr = None, None
         self.w10, self.w12 = w_qubit
         self.w_clock = w_clock
         self.d_theta, self.theta = d_theta, theta
         self.d_phi = self.w10 / self.w_clock * 2 * pi
         self.d_phi3 = (self.w10 + self.w12) / self.w10 * self.d_phi
         self.resonance_times = int(round(self.w_clock/self.w10, 0))
+        self.r_kets = [self._ideal_rotation(ket) for ket in self.s_kets]
+
+    @property
+    def kets(self):
+        return [dot(self.u, ket) for ket in self.s_kets]
 
     def precess(self):
         """Precess the qubit for one clock period."""
-        self.kets = [dot(self.ufr, ket) for ket in self.kets]
+        self.u = dot(self.u, self.ufr)
+
+    def _pulse(self):
+        self.u = dot(self.u, self.usfq)
 
     def pulse_and_precess(self):
         """Rotate the qubit for d_theta around y-axes,
@@ -79,18 +91,9 @@ class SfqQubit(object):
         self._pulse()
         self.precess()
 
-    def measure_fidelity():
+    def measure_fidelity(self):
         """Measure the fidelity. Implement in subclasses."""
         pass
-
-    def _pulse(self):
-        self.kets = [dot(self.usfq, ket) for ket in self.kets]
-
-    """
-    def __getattr__(self, attr):
-        loc = [i for i, x in enumerate(self.order) if x == attr]
-        return self.kets[loc[0]] if loc else None
-   """
 
     def resonance(self):
         """Resonance pulse sequence. The pulses are spaced by d_phi
@@ -124,32 +127,28 @@ class SfqQubit(object):
 
 class Sfq3LevelQubit(SfqQubit):
     """Qubit with leakage level."""
+    g = array([1.0, 0.0, 0.0], dtype=complex64)
+    e = array([0.0, 1.0, 0.0], dtype=complex64)
+    p = 1.0/sqrt(2.0)*array([1.0, 1.0, 0.0], dtype=complex64)
+    p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j, 0.0], dtype=complex64)
+    m = 1.0/sqrt(2.0)*array([1.0, -1.0, 0.0], dtype=complex64)
+    m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j, 0.0], dtype=complex64)
+    s_kets = [g, e, m, m_i, p, p_i]
+    a = array([[0.0, 1.0, 0.0], [0.0, 0.0, sqrt(2.0)],
+               [0.0, 0.0, 0.0]], dtype=complex64)
+    a_dag = array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0],
+                   [0.0, sqrt(2.0), 0.0]], dtype=complex64)
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         super(Sfq3LevelQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
         """Initialize all the kets and operators for the three level qubit."""
-        self.g = array([1.0, 0.0, 0.0], dtype=complex64)
-        self.e = array([0.0, 1.0, 0.0], dtype=complex64)
-        self.p = 1.0/sqrt(2.0)*array([1.0, 1.0, 0.0], dtype=complex64)
-        self.p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j, 0.0], dtype=complex64)
-        self.m = 1.0/sqrt(2.0)*array([1.0, -1.0, 0.0], dtype=complex64)
-        self.m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j, 0.0], dtype=complex64)
-        self.order = ['g', 'e', 'm', 'm_i', 'p', 'p_i']
-        self.pauli_kets = {'g': self.g, 'e': self.e, 'm': self.m,
-                           'm_i': self.m_i, 'p': self.p, 'p_i': self.p_i}
-        a = array([[0.0, 1.0, 0.0], [0.0, 0.0, sqrt(2.0)],
-                   [0.0, 0.0, 0.0]], dtype=complex64)
-        a_dag = array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0],
-                       [0.0, sqrt(2.0), 0.0]], dtype=complex64)
         self.ufr = array([[1.0, 0.0, 0.0],
                           [0.0, exp(-1.0j * self.d_phi), 0.0],
                           [0.0, 0.0, exp(-1.0j * self.d_phi3)]],
                          dtype=complex64)
-        self.usfq = expm(array(self.d_theta/2.0*(a_dag-a),
+        self.usfq = expm(array(self.d_theta/2.0*(self.a_dag-self.a),
                                dtype=complex64))
-        self.kets = [self.pauli_kets[key] for key in self.order]
-        self.r_kets = [self.ideal_rotation(self.pauli_kets[key])
-                       for key in self.order]
+        self.u = array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=complex64)
 
     def measure_fidelity(self, ignore_leakage=False):
         kets, r_kets = self.kets, self.r_kets
@@ -160,7 +159,7 @@ class Sfq3LevelQubit(SfqQubit):
                     for r_ket, ket in zip(r_kets, kets)]
         return sum(fidelity)/len(fidelity)
 
-    def ideal_rotation(self, ket):
+    def _ideal_rotation(self, ket):
         ideal_gate = array([[cos(self.theta/2), sin(self.theta/2), 0],
                             [-sin(self.theta/2), cos(self.theta/2), 0],
                             [0, 0, 1]], dtype=complex64)
@@ -168,30 +167,26 @@ class Sfq3LevelQubit(SfqQubit):
 
 
 class Sfq2LevelQubit(SfqQubit):
+    g = array([1.0, 0.0], dtype=complex64)
+    e = array([0.0, 1.0], dtype=complex64)
+    p = 1.0/sqrt(2.0)*array([1.0, 1.0], dtype=complex64)
+    p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j], dtype=complex64)
+    m = 1.0/sqrt(2.0)*array([1.0, -1.0], dtype=complex64)
+    m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j], dtype=complex64)
+    s_kets = [g, e, m, m_i, p, p_i]
+    a = array([[0.0, 1.0], [0.0, 0.0]], dtype=complex64)
+    a_dag = array([[0.0, 0.0], [1.0, 0.0]], dtype=complex64)
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         # The leakage frequency is specified even though
         # leakage level is not present. This is a design error.
         super(Sfq2LevelQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
         """Initialize all the kets and operators for the two level qubit."""
-        self.g = array([1.0, 0.0], dtype=complex64)
-        self.e = array([0.0, 1.0], dtype=complex64)
-        self.p = 1.0/sqrt(2.0)*array([1.0, 1.0], dtype=complex64)
-        self.p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j], dtype=complex64)
-        self.m = 1.0/sqrt(2.0)*array([1.0, -1.0], dtype=complex64)
-        self.m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j], dtype=complex64)
-        self.order = ['g', 'e', 'm', 'm_i', 'p', 'p_i']
-        self.pauli_kets = {'g': self.g, 'e': self.e, 'm': self.m,
-                           'm_i': self.m_i, 'p': self.p, 'p_i': self.p_i}
         self.ufr = array([[1.0, 0.0],
                           [0.0, exp(-1.0j * self.d_phi)]],
                          dtype=complex64)
-        a = array([[0.0, 1.0], [0.0, 0.0]], dtype=complex64)
-        a_dag = array([[0.0, 0.0], [1.0, 0.0]], dtype=complex64)
-        self.usfq = expm(array(self.d_theta/2.0*(a_dag-a), dtype=complex64))
-        self.kets = [self.pauli_kets[key] for key in self.order]
-        self.r_kets = [self.ideal_rotation(self.pauli_kets[key])
-                       for key in self.order]
+        self.usfq = expm(array(self.d_theta/2.0*(self.a_dag-self.a), dtype=complex64))
+        self.u = array([[1, 0], [0, 1]], dtype=complex64)
 
     def measure_fidelity(self):
         kets, r_kets = self.kets, self.r_kets
@@ -199,7 +194,7 @@ class Sfq2LevelQubit(SfqQubit):
                     for r_ket, ket in zip(r_kets, kets)]
         return sum(fidelity)/len(fidelity)
 
-    def ideal_rotation(self, ket):
+    def _ideal_rotation(self, ket):
         ideal_gate = array([[cos(self.theta/2), sin(self.theta/2)],
                             [-sin(self.theta/2), cos(self.theta/2)]],
                            dtype=complex64)
@@ -212,20 +207,16 @@ in addition to the state kets.
 They are separated from the normal qubits to improve performance
 """
 
-
-class Sfq2LevelEulerQubit(Sfq2LevelQubit):
+class SfqFancyQubit(SfqQubit):
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
-        super(Sfq2LevelEulerQubit, self).__init__(d_theta, w_clock,
+        super(SfqQubit, self).__init__(d_theta, w_clock,
                                                   w_qubit, theta)
-        """In addition to the 6 cardinal states,
-        we record the euler angles."""
-        self.u = array([[1, 0], [0, 1]])
-        self.alpha_list = list()
-        self.beta_list = list()
-        self.gamma_list = list()
 
-    def pulse_pattern(self, pattern):
+    def _init_euler_angles(self):
+        self.alpha_list, self.beta_list, self.gamma_list = list(), list() ,list()
+
+    def pulse_pattern_euler(self, pattern):
         while pattern:
             if pattern.pop() == 1:
                 self.pulse_and_precess()
@@ -237,41 +228,21 @@ class Sfq2LevelEulerQubit(Sfq2LevelQubit):
             self.beta_list.append(beta)
             self.gamma_list.append(gamma)
 
-    def precess(self):
-        self.u = dot(self.ufr, self.u)
-        super(Sfq2LevelEulerQubit, self).precess()
 
-    def pulse_and_precess(self):
-        self.u = dot(self.usfq, self.u)
-        super(Sfq2LevelEulerQubit, self).pulse_and_precess()
-
-
-class Sfq3LevelEulerQubit(Sfq3LevelQubit):
+class Sfq2LevelFancyQubit(Sfq2LevelQubit, SfqFancyQubit):
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
-        super(Sfq3LevelEulerQubit, self).__init__(d_theta, w_clock,
+        super(Sfq2LevelFancyQubit, self).__init__(d_theta, w_clock,
                                                   w_qubit, theta)
-        self.u = array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        self.alpha_list = list()
-        self.beta_list = list()
-        self.gamma_list = list()
+        self._init_euler_angles()
 
-    def pulse_pattern(self, pattern):
-        while pattern:
-            if pattern.pop() == 1:
-                self.pulse_and_precess()
-            else:
-                self.precess()
-            alpha, beta, gamma = decompose_euler(self.u,
-                                                 unimodular_check=False)
-            self.alpha_list.append(alpha)
-            self.beta_list.append(beta)
-            self.gamma_list.append(gamma)
+        """In addition to the 6 cardinal states,
+        we record the euler angles."""
 
-    def precess(self):
-        self.u = dot(self.ufr, self.u)
-        super(Sfq3LevelEulerQubit, self).precess()
 
-    def pulse_and_precess(self):
-        self.u = dot(self.usfq, self.u)
-        super(Sfq3LevelEulerQubit, self).pulse_and_precess()
+class Sfq3LevelFancyQubit(Sfq3LevelQubit, SfqFancyQubit):
+    def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
+                 w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
+        super(Sfq3LevelFancyQubit, self).__init__(d_theta, w_clock,
+                                                  w_qubit, theta)
+        self._init_euler_angles()

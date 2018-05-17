@@ -1,6 +1,6 @@
 """This code is not longer valid given current version of sfqEvolution
 Do not use this code."""
-from sfqEvolution import Sfq3LevelQubit, Sfq2LevelQubit
+from sfqQubit import Sfq3LevelQubit, Sfq2LevelQubit
 import numpy as np
 import time
 import matplotlib.pyplot as plt

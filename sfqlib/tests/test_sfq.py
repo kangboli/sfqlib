@@ -28,7 +28,7 @@ def test_sweep_d_theta_with_pattern(Qubit):
         pattern = list()
         pattern = make_resonance_pattern(num_steps)
         qubit = Qubit((np.pi/2.0/num_steps))
-        qubit.pulse_pattern(pattern)
+        qubit.pulse_pattern_euler(pattern)
         fidelities.append(qubit.measure_fidelity())
     return [1.0-f for f in fidelities]
 
@@ -55,12 +55,12 @@ def make_resonance_pattern(num):
 
 class TestReproduceOldResults(unittest.TestCase):
     """Test that new version of the code reproduce the old results."""
-    def test_resonance_sequence(self):
+    def test_resonance_sequence_3_level(self):
         legacy_resonance = test_sweep_d_theta(Sfq3Legacy)
         dev_resonance = test_sweep_d_theta(Sfq3LevelQubit)
         self.assert_sequence_equal(legacy_resonance, dev_resonance)
 
-    def test_resonance_sequence_with_pattern(self):
+    def test_resonance_sequence_with_pattern_3_level(self):
         legacy_resonance_with_pattern = test_sweep_d_theta_with_pattern(
             Sfq3Legacy)
         dev_resonance_with_pattern = test_sweep_d_theta_with_pattern(
@@ -68,15 +68,33 @@ class TestReproduceOldResults(unittest.TestCase):
         self.assert_sequence_equal(legacy_resonance_with_pattern,
                                    dev_resonance_with_pattern)
 
-    def test_drift(self):
+    def test_drift_3_level(self):
         legacy_drift = test_sweep_qubit_frequency(Sfq3Legacy, np.pi/2.0/50)
         dev_drift = test_sweep_qubit_frequency(Sfq3LevelQubit, np.pi/2.0/50)
+        self.assert_sequence_equal(legacy_drift, dev_drift)
+
+    def test_resonance_sequence_2_level(self):
+        legacy_resonance = test_sweep_d_theta(Sfq2Legacy)
+        dev_resonance = test_sweep_d_theta(Sfq2LevelQubit)
+        self.assert_sequence_equal(legacy_resonance, dev_resonance)
+
+    def test_resonance_sequence_with_pattern_2_level(self):
+        legacy_resonance_with_pattern = test_sweep_d_theta_with_pattern(
+            Sfq2Legacy)
+        dev_resonance_with_pattern = test_sweep_d_theta_with_pattern(
+            Sfq2LevelQubit)
+        self.assert_sequence_equal(legacy_resonance_with_pattern,
+                                   dev_resonance_with_pattern)
+
+    def test_drift_2_level(self):
+        legacy_drift = test_sweep_qubit_frequency(Sfq2Legacy, np.pi/2.0/50)
+        dev_drift = test_sweep_qubit_frequency(Sfq2LevelQubit, np.pi/2.0/50)
         self.assert_sequence_equal(legacy_drift, dev_drift)
 
     def assert_sequence_equal(self, seq1, seq2):
         self.assertEqual(len(seq1), len(seq2))
         for l, d in zip(seq1, seq2):
-            self.assertAlmostEqual(l, d)
+            self.assertAlmostEqual(l, d, 5)
 
 
 if __name__ == '__main__':

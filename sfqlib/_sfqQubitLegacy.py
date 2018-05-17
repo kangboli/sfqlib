@@ -128,7 +128,7 @@ class Sfq3LevelQubit(SfqQubit):
                           [0.0, exp(-1.0j * self.d_phi), 0.0],
                           [0.0, 0.0, exp(-1.0j * self.d_phi3)]],
                          dtype=complex64)
-        self.usfq = expm(array(self.d_theta/2.0*(a-a_dag),
+        self.usfq = expm(array(self.d_theta/2.0*(a_dag-a),
                                dtype=complex64))
         self.kets = [self.pauli_kets[key] for key in self.order]
         self.r_kets = [self.ideal_rotation(self.pauli_kets[key])
@@ -173,7 +173,7 @@ class Sfq2LevelQubit(SfqQubit):
                          dtype=complex64)
         a = array([[0.0, 1.0], [0.0, 0.0]], dtype=complex64)
         a_dag = array([[0.0, 0.0], [1.0, 0.0]], dtype=complex64)
-        self.usfq = expm(array(self.d_theta/2.0*(a-a_dag), dtype=complex64))
+        self.usfq = expm(array(self.d_theta/2.0*(a_dag-a), dtype=complex64))
         self.kets = [self.pauli_kets[key] for key in self.order]
         self.r_kets = [self.ideal_rotation(self.pauli_kets[key])
                        for key in self.order]
