@@ -1,0 +1,56 @@
+#+OPTIONS: toc:nil
+#+TITLE: Bench Mark
+#+AUTHOR: Kangbo Li
+* Python Code
+#+BEGIN_SRC python
+qubit = Sfq3LevelQubit(d_theta=pi/20, w_clock=2*pi*40e9,
+                            w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
+start = time()
+for i in range(1000000):
+    qubit.pulse_and_precess()
+
+end = time()
+print str(end - start)
+#+END_SRC
+The result is 2.73 seconds.
+* C++ Code
+#+BEGIN_SRC C++
+#include <iostream>
+#include "./Eigen/Dense"
+#include <complex>
+#include <ctime>
+
+using namespace Eigen;
+using namespace std::literals;
+
+int main()
+{
+  Matrix3cd u_free;
+  u_free <<  1.0+0.i, 0.0+0.0i, 0.0+0.0i,
+  0.0+0.i, 0.70710678-0.70710678i, 0.0+0.0i,
+  0.0+0.i, 0.0+0.i, -0.68454711-0.72896863i;
+
+  Matrix3cd u_sfq;
+  u_sfq << 0.9969205 + 0.0i, -0.0782978 + 0.0i, 0.00435507 + 0.0i,
+      0.0782978 + 0.0i, 0.99076151 + 0.0i, -0.11072982 + 0.0i,
+      0.00435507 + 0.0i, 0.11072982 + 0.0i, 0.993841 + 0.0i;
+
+  Matrix3cd v;
+  v << 1.0, 0, 0,
+      0, 1.0, 0,
+      0, 0, 1.0;
+  clock_t begin = clock();
+  for (int i = 0; i < 1000000; i++){
+    v = u_free * v;
+    v = u_sfq * v;
+  }
+  clock_t end = clock();
+  std::cout << "It took " << double(end - begin)/double(CLOCKS_PER_SEC) << " s" << std::endl;
+  return 0;
+}
+
+#+END_SRC
+The result is 5.43 seconds.
+* Discussion
+It is not clear to be why the python code is faster than C++,
+but this dissuades me from further optimization.
