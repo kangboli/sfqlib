@@ -1,26 +1,26 @@
 """
-Tool for SFQ research.
-__author__ = "Kangbo Li"
-__copyright__ = "Copyright 2018, The SFQ Project"
-__license__ = "MIT"
-__version__ = "0.0.1"
-__maintainer__ = "Kangbo Li"
-__email__ = "kli89@wisc.edu"
-__status__ = "Beta"
+Single Flux Quantum applied to Qubits.
+The class SfqQubit, Sfq3LevelQubit, Sfq2LevelQubit are optimized for performance.
+Do not change those three classes. Instead, subclass them to implement more features.
 """
 
 from scipy.linalg import expm
 from numpy import array, complex64, sqrt, pi, \
-    absolute, exp, dot, angle, cos, sin, conj
+    absolute, exp, dot, angle, cos, sin, conj, complex128
 from sfqlib.euler_angle import decompose_euler
-from copy import deepcopy
+from bloch import Bloch
+import matplotlib.pyplot as plt
+index_to_states = {0: '$G$', 1: '$E$', 2: '$P$', 3: '$P_I$', 4: '$M$', 5: '$M_I$'}
+
 
 class SfqSequence():
+    """This class represents a pulse sequence.
+    It does decimal to binary conversion and visualization of the pulse sequence."""
     def __init__(self, sequence_dec, length):
         """
         :param int sequence_dec: The sequence specified as an integer.
         This will be later converted to a binary as a bit string.
-        :apram int length: The length of the bit string.
+        :param int length: The length of the bit string.
         If the sequence_dec is too large to be represented by a length bits,
         it will be truncated.
         """
@@ -35,6 +35,7 @@ class SfqSequence():
         return list(self.decimal_to_binary(self.decimal, self.length))
 
     def plot_sequence(self, ax):
+        """Plot the pulse sequence as a bar code."""
         for index, bit in enumerate(self.binary):
             if bit == 1:
                 ax.plot([index, index], [0, 1], 'b')
@@ -51,10 +52,10 @@ class SfqSequence():
 
 
 class SfqQubit(object):
-    g, e, p, p_i, m, m_i = None, None, None, None ,None, None
-    s_kets = [g, e, m, m_i, p, p_i]
-    a, a_dag = None, None
     """Qubit controlled by SFQ pulses. This class is to be subclassed."""
+    g, e, p, p_i, m, m_i = None, None, None, None ,None, None
+    static_kets = [g, e, m, m_i, p, p_i]
+    a, a_dag = None, None
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         """
@@ -65,35 +66,32 @@ class SfqQubit(object):
         Leakage level frequency)
         :param float theta: Total rotation.
         """
-        self.usfq, self.ufr = None, None
-        self.w10, self.w12 = w_qubit
+        self.u_sfq, self.u_free = None, None
+        self.w_10, self.w_12 = w_qubit
         self.w_clock = w_clock
         self.d_theta, self.theta = d_theta, theta
-        self.d_phi = self.w10 / self.w_clock * 2 * pi
-        self.d_phi3 = (self.w10 + self.w12) / self.w10 * self.d_phi
-        self.resonance_times = int(round(self.w_clock/self.w10, 0))
-        self.r_kets = [self._ideal_rotation(ket) for ket in self.s_kets]
+        self.d_phi = self.w_10 / self.w_clock * 2 * pi
+        self.d_phi3 = (self.w_10 + self.w_12) / self.w_10 * self.d_phi
+        self.resonance_times = int(round(self.w_clock / self.w_10, 0))
+        self.rotated_kets = [self._ideal_rotation(ket) for ket in self.static_kets]
 
     @property
     def kets(self):
-        return [dot(self.u, ket) for ket in self.s_kets]
+        return [dot(self.u, ket) for ket in self.static_kets]
 
     def precess(self):
         """Precess the qubit for one clock period."""
-        self.u = dot(self.u, self.ufr)
+        self.u = dot(self.u_free, self.u)
 
     def _pulse(self):
-        self.u = dot(self.u, self.usfq)
+        """Apply a SFQ pulse to the qubit."""
+        self.u = dot(self.u_sfq, self.u)
 
     def pulse_and_precess(self):
         """Rotate the qubit for d_theta around y-axes,
         followed by precession for one clock period."""
         self._pulse()
         self.precess()
-
-    def measure_fidelity(self):
-        """Measure the fidelity. Implement in subclasses."""
-        pass
 
     def resonance(self):
         """Resonance pulse sequence. The pulses are spaced by d_phi
@@ -116,6 +114,10 @@ class SfqQubit(object):
             else:
                 self.precess()
 
+    def measure_fidelity(self):
+        """Measure the fidelity. Implement in subclasses."""
+        pass
+
     def _ideal_rotation(self, ket):
         """
         Rotate the pauli states according to the ideal y-rotation.
@@ -127,77 +129,70 @@ class SfqQubit(object):
 
 class Sfq3LevelQubit(SfqQubit):
     """Qubit with leakage level."""
-    g = array([1.0, 0.0, 0.0], dtype=complex64)
-    e = array([0.0, 1.0, 0.0], dtype=complex64)
-    p = 1.0/sqrt(2.0)*array([1.0, 1.0, 0.0], dtype=complex64)
-    p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j, 0.0], dtype=complex64)
-    m = 1.0/sqrt(2.0)*array([1.0, -1.0, 0.0], dtype=complex64)
-    m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j, 0.0], dtype=complex64)
-    s_kets = [g, e, m, m_i, p, p_i]
+    g = array([1.0, 0.0, 0.0], dtype=complex128)
+    e = array([0.0, 1.0, 0.0], dtype=complex128)
+    p = 1.0/sqrt(2.0)*array([1.0, 1.0, 0.0], dtype=complex128)
+    p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j, 0.0], dtype=complex128)
+    m = 1.0/sqrt(2.0)*array([1.0, -1.0, 0.0], dtype=complex128)
+    m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j, 0.0], dtype=complex128)
+    static_kets = [g, e, m, m_i, p, p_i]
     a = array([[0.0, 1.0, 0.0], [0.0, 0.0, sqrt(2.0)],
-               [0.0, 0.0, 0.0]], dtype=complex64)
+               [0.0, 0.0, 0.0]], dtype=complex128)
     a_dag = array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0],
-                   [0.0, sqrt(2.0), 0.0]], dtype=complex64)
+                   [0.0, sqrt(2.0), 0.0]], dtype=complex128)
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         super(Sfq3LevelQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
-        """Initialize all the kets and operators for the three level qubit."""
-        self.ufr = array([[1.0, 0.0, 0.0],
-                          [0.0, exp(-1.0j * self.d_phi), 0.0],
-                          [0.0, 0.0, exp(-1.0j * self.d_phi3)]],
-                         dtype=complex64)
-        self.usfq = expm(array(self.d_theta/2.0*(self.a_dag-self.a),
-                               dtype=complex64))
-        self.u = array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=complex64)
+        self.u_free = array([[1.0, 0.0, 0.0],
+                             [0.0, exp(-1.0j * self.d_phi), 0.0],
+                             [0.0, 0.0, exp(-1.0j * self.d_phi3)]],
+                            dtype=complex128)
+        self.u_sfq = expm(array(self.d_theta / 2.0 * (self.a_dag - self.a),
+                                dtype=complex128))
+        self.u = array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=complex128)
 
     def measure_fidelity(self, ignore_leakage=False):
-        kets, r_kets = self.kets, self.r_kets
+        kets, rotated_kets = self.kets, self.rotated_kets
         if ignore_leakage:
             kets = [[ket[0], ket[1], 0] for ket in kets]
-            r_kets = [[r_ket[0], r_ket[1], 0] for r_ket in r_kets]
-        fidelity = [pow(absolute(dot(conj(r_ket), ket)), 2)
-                    for r_ket, ket in zip(r_kets, kets)]
+            rotated_kets = [[r_ket[0], r_ket[1], 0] for r_ket in rotated_kets]
+        fidelity = [pow(absolute(dot(conj(r_ket), ket)), 2) for r_ket, ket in zip(rotated_kets, kets)]
         return sum(fidelity)/len(fidelity)
 
     def _ideal_rotation(self, ket):
         ideal_gate = array([[cos(self.theta/2), sin(self.theta/2), 0],
-                            [-sin(self.theta/2), cos(self.theta/2), 0],
-                            [0, 0, 1]], dtype=complex64)
+                            [-sin(self.theta/2), cos(self.theta/2), 0], [0, 0, 1]], dtype=complex128)
         return dot(ideal_gate, ket)
 
 
 class Sfq2LevelQubit(SfqQubit):
-    g = array([1.0, 0.0], dtype=complex64)
-    e = array([0.0, 1.0], dtype=complex64)
-    p = 1.0/sqrt(2.0)*array([1.0, 1.0], dtype=complex64)
-    p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j], dtype=complex64)
-    m = 1.0/sqrt(2.0)*array([1.0, -1.0], dtype=complex64)
-    m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j], dtype=complex64)
-    s_kets = [g, e, m, m_i, p, p_i]
-    a = array([[0.0, 1.0], [0.0, 0.0]], dtype=complex64)
-    a_dag = array([[0.0, 0.0], [1.0, 0.0]], dtype=complex64)
+    g = array([1.0, 0.0], dtype=complex128)
+    e = array([0.0, 1.0], dtype=complex128)
+    p = 1.0/sqrt(2.0)*array([1.0, 1.0], dtype=complex128)
+    p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j], dtype=complex128)
+    m = 1.0/sqrt(2.0)*array([1.0, -1.0], dtype=complex128)
+    m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j], dtype=complex128)
+    static_kets = [g, e, m, m_i, p, p_i]
+    a = array([[0.0, 1.0], [0.0, 0.0]], dtype=complex128)
+    a_dag = array([[0.0, 0.0], [1.0, 0.0]], dtype=complex128)
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         # The leakage frequency is specified even though
         # leakage level is not present. This is a design error.
         super(Sfq2LevelQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
         """Initialize all the kets and operators for the two level qubit."""
-        self.ufr = array([[1.0, 0.0],
-                          [0.0, exp(-1.0j * self.d_phi)]],
-                         dtype=complex64)
-        self.usfq = expm(array(self.d_theta/2.0*(self.a_dag-self.a), dtype=complex64))
-        self.u = array([[1, 0], [0, 1]], dtype=complex64)
+        self.u_free = array([[1.0, 0.0], [0.0, exp(-1.0j * self.d_phi)]], dtype=complex128)
+        self.u_sfq = expm(array(self.d_theta / 2.0 * (self.a_dag - self.a), dtype=complex128))
+        self.u = array([[1, 0], [0, 1]], dtype=complex128)
 
     def measure_fidelity(self):
-        kets, r_kets = self.kets, self.r_kets
-        fidelity = [pow(absolute(dot(conj(r_ket), ket)), 2)
-                    for r_ket, ket in zip(r_kets, kets)]
+        kets, rotated_kets = self.kets, self.rotated_kets
+        fidelity = [pow(absolute(dot(conj(r_ket), ket)), 2) for r_ket, ket in zip(rotated_kets, kets)]
         return sum(fidelity)/len(fidelity)
 
     def _ideal_rotation(self, ket):
         ideal_gate = array([[cos(self.theta/2), sin(self.theta/2)],
-                            [-sin(self.theta/2), cos(self.theta/2)]],
-                           dtype=complex64)
+                            [-sin(self.theta/2), cos(self.theta/2)]], dtype=complex128)
         return dot(ideal_gate, ket)
 
 
@@ -210,11 +205,40 @@ They are separated from the normal qubits to improve performance
 class SfqFancyQubit(SfqQubit):
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
-        super(SfqQubit, self).__init__(d_theta, w_clock,
+        super(SfqFancyQubit, self).__init__(d_theta, w_clock,
                                                   w_qubit, theta)
 
-    def _init_euler_angles(self):
+    def _fancy_init(self, axes):
         self.alpha_list, self.beta_list, self.gamma_list = list(), list() ,list()
+
+    def set_plot_kets(self, plot_kets=None):
+        """Choose which kets to plot. Plotting too many kets may lead to performance issues.
+        :param plot_kets:
+        """
+        state_to_index = {'G': 0, 'E': 1, 'P': 2, 'P_I': 3, 'M': 4, 'M_I': 5}
+        if plot_kets is None:
+            self.kets_to_plot_index = list(range(6))
+        else:
+            self.kets_to_plot_index = [state_to_index[ket.upper()] for ket in plot_kets]
+        self.update_bloch_sphere()
+
+    def precess(self):
+        super(SfqFancyQubit, self).precess()
+        self.set_projection_source('z-axis')
+        self.update_bloch_sphere()
+        self._record_euler()
+
+    def _pulse(self):
+        super(SfqFancyQubit, self)._pulse()
+        self.set_projection_source('origin')
+        self.update_bloch_sphere()
+        self._record_euler()
+
+    def set_projection_source(self, source):
+        pass
+
+    def update_bloch_sphere(self):
+        pass
 
     def pulse_pattern_euler(self, pattern):
         while pattern:
@@ -222,27 +246,77 @@ class SfqFancyQubit(SfqQubit):
                 self.pulse_and_precess()
             else:
                 self.precess()
-            # Keep track of the euler angles.
-            alpha, beta, gamma = decompose_euler(self.u)
-            self.alpha_list.append(alpha)
-            self.beta_list.append(beta)
-            self.gamma_list.append(gamma)
+
+    def _record_euler(self):
+        alpha, beta, gamma = decompose_euler(self.u, unimodular_check=False)
+        self.alpha_list.append(alpha)
+        self.beta_list.append(beta)
+        self.gamma_list.append(gamma)
 
 
 class Sfq2LevelFancyQubit(Sfq2LevelQubit, SfqFancyQubit):
-    def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
+    def __init__(self, axes, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
-        super(Sfq2LevelFancyQubit, self).__init__(d_theta, w_clock,
-                                                  w_qubit, theta)
-        self._init_euler_angles()
+        super(Sfq2LevelFancyQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
+        self._fancy_init(axes)
 
-        """In addition to the 6 cardinal states,
-        we record the euler angles."""
+    def _fancy_init(self, axes):
+        super(Sfq2LevelFancyQubit, self)._fancy_init(axes)
+        self.bloch = Bloch(axes=axes)
+        self.bloch.axes.text(1, 0, 0, 'X', fontsize=20)
+        self.bloch.axes.text(0, 1, 0, 'Y', fontsize=20)
+        self.bloch.axes.text(0, 0, 1.1, r'$\left|0\right>$', fontsize=20)
+        self.bloch.axes.text(0, 0, -1.1, r'$\left|1\right>$', fontsize=20)
+
+    def set_projection_source(self, source):
+        self.bloch.set_projection_source(source)
+
+    def update_bloch_sphere(self):
+        for index, ket in enumerate(self.kets):
+            if index in self.kets_to_plot_index:
+                self.bloch.shovel_ket(ket, id=index, trace=True, text=index_to_states[index])
+
+class MissingAxesException(Exception):
+    def __init__(self):
+        super(MissingAxesException, self).__init__('Two axes are required.')
 
 
 class Sfq3LevelFancyQubit(Sfq3LevelQubit, SfqFancyQubit):
-    def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
+    def __init__(self, axes, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
-        super(Sfq3LevelFancyQubit, self).__init__(d_theta, w_clock,
-                                                  w_qubit, theta)
-        self._init_euler_angles()
+        super(Sfq3LevelFancyQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
+        self._fancy_init(axes)
+
+    def _fancy_init(self, axes):
+        super(Sfq3LevelFancyQubit, self)._fancy_init(axes)
+        if len(axes) != 2:
+            raise MissingAxesException()
+        self.alpha_list, self.beta_list, self.gamma_list = list(), list() ,list()
+
+        self.bloch_01 = Bloch(axes=axes[0])
+        self.bloch_01.axes.text(1, 0, 0, 'X', fontsize=10)
+        self.bloch_01.axes.text(0, 1, 0, 'Y', fontsize=10)
+        self.bloch_01.axes.text(0, 0, 1.1, r'$\left|0\right>$', fontsize=10)
+        self.bloch_01.axes.text(0, 0, -1.1, r'$\left|1\right>$', fontsize=10)
+
+        self.bloch_12 = Bloch(axes=axes[1])
+        self.bloch_12.axes.text(1, 0, 0, 'X', fontsize=10)
+        self.bloch_12.axes.text(0, 1, 0, 'Y', fontsize=10)
+        self.bloch_12.axes.text(0, 0, 1.1, r'$\left|1\right>$', fontsize=10)
+        self.bloch_12.axes.text(0, 0, -1.1, r'$\left|2\right>$', fontsize=10)
+
+    def set_projection_source(self, source):
+        self.bloch_01.set_projection_source(source)
+        self.bloch_12.set_projection_source(source)
+
+    def update_bloch_sphere(self):
+        kets_01 = [[ket[0], ket[1]] for ket in self.kets]
+        kets_12 = [[ket[1], ket[2]] for ket in self.kets]
+
+        for index, ket in enumerate(kets_01):
+            if index in self.kets_to_plot_index:
+                self.bloch_01.shovel_ket(ket, id=index, trace=True, text=index_to_states[index])
+
+        for index, ket in enumerate(kets_12):
+            if index in self.kets_to_plot_index:
+                self.bloch_12.shovel_ket(ket, id=index, trace=True, text=index_to_states[index])

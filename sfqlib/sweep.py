@@ -1,5 +1,6 @@
 """This code is not longer valid given current version of sfqEvolution
-Do not use this code."""
+Do not use this code.
+TODO UPDATE THE SWEEP"""
 from sfqQubit import Sfq3LevelQubit, Sfq2LevelQubit
 import numpy as np
 import time

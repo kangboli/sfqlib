@@ -25,10 +25,9 @@ def test_sweep_d_theta_with_pattern(Qubit):
     n = np.linspace(10, 500, 10)
     fidelities = list()
     for j, num_steps in enumerate(n):
-        pattern = list()
         pattern = make_resonance_pattern(num_steps)
         qubit = Qubit((np.pi/2.0/num_steps))
-        qubit.pulse_pattern_euler(pattern)
+        qubit.pulse_pattern(pattern)
         fidelities.append(qubit.measure_fidelity())
     return [1.0-f for f in fidelities]
 

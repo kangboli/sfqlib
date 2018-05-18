@@ -8,95 +8,85 @@
    #+BEGIN_SRC sh
    pip install sfqlib
    #+END_SRC
-** A Qubit
-  When a qubit is created, 
-  each qubit has simply the 6 cardinal states, namely.
-  [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0j, 0.0], [1.0, -1.0, 0.0], [1.0, -1.0j, 0.0],
-  Then we can evolve the qubit by evolving all 6 states.
-*** Qubit types
-    + Sfq3LevelQubit: A qubit that includes the leakage level.
-    + Sfq2LevelQubit: An ideal two level qubit.
-    + Sfq3LevelEulerQubit: Three level qubit with euler angles recorded.
-    + Sfq2LevelEulerQubit: Two level qubit with euler angles recorded.
-*** Create a qubit
-    A qubit is defined by 
-    + Qubit frequency (both w_{01} and w_{12})
-    + Clock frequency.
-    + Rotation induced by a single SFQ pulse.
-    + Target rotation, against which we define the infidelity.
-    For example, to create a 3 level qubit.
-    #+BEGIN_SRC python
-    qubit = Sfq3LevelQubit(d_theta=pi/200, w_clock=2*pi*5e9,
-          w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
-    #+END_SRC
+   For the latest version, install from the wheels in `dist/`.
+** Create a Qubit
+  When a qubit is created, it starts at |0> state.
+  However, all 6 cardinal states on the block sphere are tracked.
+  There are two types of basic qubit.
+  + Sfq3LevelQubit: A qubit that includes the leakage level.
+  + Sfq2LevelQubit: An ideal two level qubit.
+
+  Each qubit is defined by its
+  + Qubit frequency (both w_{01} and w_{12})
+  + Clock frequency.
+  + Rotation induced by a single SFQ pulse.
+  + Target rotation, against which we define the infidelity.
+  For example, to create a 3 level qubit.
+  #+BEGIN_SRC python
+  qubit = Sfq3LevelQubit(d_theta=pi/200, w_clock=2*pi*5e9,
+        w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
+  #+END_SRC
 ** Qubit Evolution.
 *** Evolve a qubit
     We can do three basic things on a qubit.
-    Suppose that we created a qubit
-    #+BEGIN_SRC python
-    qubit = Sfq3LevelQubit(d_theta=pi/200, w_clock=2*pi*5e9,
-          w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
-    #+END_SRC
-**** Precess
-     We can precess the qubit for one clock period.
-     (multiplying all 6 states by the free precession time evolution operator).
-     #+BEGIN_SRC python
-     qubit.precess()
-     #+END_SRC
-**** SFQ Pulse and Precess
-     We can apply a pulse and then precess.
-     It is =pulse_and_precess= rather than =pulse= because
-       + Applying two pulses consecutively is not possible experimentally.
-       + It simplifies programming.
-     #+BEGIN_SRC python
-     qubit.pulse_and_precess()
-     #+END_SRC
-**** Measure the fidelity
-     The fidelity is averaged over the 6 states.
-     #+BEGIN_SRC python
-     qubit.measure_fidelity()
-     #+END_SRC
-     In case of three level qubits, you can optionally ignore the indelity due to leakage level.
-     #+BEGIN_SRC python
-     qubit.measure_fidelity(ignore_leakage=True)
-     #+END_SRC
-**** More operations
+    + precess for one clock period.
+      #+BEGIN_SRC python
+      qubit.precess()
+      #+END_SRC
+    + Apply a SFQ pulse and precess for one clock period.
+      It is =pulse_and_precess= rather than =pulse= because
+        + Applying two pulses consecutively is not possible experimentally.
+        + It simplifies programming.
+      #+BEGIN_SRC python
+      qubit.pulse_and_precess()
+      #+END_SRC
+    + Measure the fidelity.
+      The fidelity is averaged over the 6 states.
+      #+BEGIN_SRC python
+      qubit.measure_fidelity()
+      #+END_SRC
+      In case of three level qubits, you can optionally ignore the indelity due to leakage level.
+      #+BEGIN_SRC python
+      qubit.measure_fidelity(ignore_leakage=True)
+      #+END_SRC
+      Suppose that we created a qubit
 *** More usage
      You can apply arbitrary pulse sequences by interleaving 
      =precess= and =pulse_and_precess=, 
      but there are a few helper functions for doing that.
 **** Resonance
-      You can apply a resonance requence that achieves that target rotation by
+     You can apply a resonance requence that achieves that target rotation by
       #+BEGIN_SRC 
       qubit.resonance()
       #+END_SRC
 **** Pulse pattern
      A sequence can be specified as a bit string.
-     Each bit corresponds to a clock edge, 
-     where 1 means applying a SFQ pulse,
-     and 0 means not applying a SFQ pulse at the clock edge.
-     For example, if you want to apply pulse at the 4th and 6th clock cycle.
+     Each bit corresponds to a clock edge, where 
+     + 1 means applying a SFQ pulse at the clock edge.
+     + 0 means not applying a SFQ pulse at the clock edge.
+     For example, if one wants to apply pulses at the 4th and 6th clock edge. 
      #+BEGIN_SRC 
      pattern = [0, 0, 0, 1, 0, 1]
      qubit.pulse_pattern(pattern)
      #+END_SRC
-*** Pulse sequence
+*** Pulse sequence                                                 :noexport:
 **** Create a pattern
      To avoid the tedium of typing up patterns,
      we can specify a pattern as a decimal number.
      a class =sfqsequence= is provided for this purpose.
-     for example, one can create the bit pattern [1, 0, 0, 0] like the following.
+     For example, one can create the bit pattern [1, 0, 0, 0] like the following.
      #+BEGIN_SRC python
      sequence = sfqsequence(8, 4).binary
      #+END_SRC
-     this is convinent for enumerating sequences. 
+     This is convinent for enumerating large number of sequences. 
      #+BEGIN_SRC python
+     # All sequence that is 10 bits long.
      [sfqsequence(i, 10) for i in range(pow(2, 10))]
      #+END_SRC
 **** Evolve the qubit
      To apply a sequence to a qubit.
      #+BEGIN_SRC python
-   qubit.pulse_pattern(pattern, sequence.binary):
+     qubit.pulse_pattern(sequence.binary):
      #+END_SRC
      As another example, to try all possible sequences of n bits long.
      #+BEGIN_SRC python
@@ -113,3 +103,76 @@
                                 for sequence_num in range(pow(2, n))]
           return all_seq_of_length_n
      #+END_SRC
+** Fancy Qubits
+   The qubit implementation discussed above runs at the speed of C++ when numpy uses MKL.
+   To maintain that speed, operations that harm performance are separated into `FancyQubits`.
+   Currently, there are two main features in `FancyQubits`.
+   + Euler angles.
+   + Visual Qubit.
+*** Create a Fancy Qubit
+    To allow users to manipulate the visualization,
+    the qubit will be visualized on a axis provided by the user.
+**** Sfq2LevelFancyQubit 
+     For 2 level qubit, one axis is required.
+    #+BEGIN_SRC python
+    qubit = Sfq2LevelFancyQubit(axis, d_theta=pi/200, w_clock=2*pi*40e9,
+                                w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
+    #+END_SRC
+**** Sfq3LevelFancyQubit
+     For 3 level qubit, to plot in both the 0-1 subspace and the 1-2 subspace, 2 axes are required.
+     #+BEGIN_SRC python
+     qubit = Sfq3LevelFancyQubit((axis_01, axis_12), d_theta=pi/200, w_clock=2*pi*40e9,
+                                 w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
+     #+END_SRC
+*** Euler angles.
+    Fancy qubit records the Euler angles of the rotation at each step.
+    For mathematical details, see the document `euler.pdf`.
+*** Visual Qubit
+    *BEFORE* evolving the qubit,
+    use the function `set_projection_source` to specify which cardinal states you would like visualize.
+    The states are specified as the following.
+    +'G': Ground (+z)
+    +'E': Excited (-z)
+    +'P': (+x)
+    +'P_I': (+y)
+    +'M': (-x)
+    +'M_I': (-y)
+*** Usage
+    First we initiate some axes.
+    #+BEGIN_SRC python
+    fig = plt.figure(figsize=(10, 10))
+    axis_01 = fig.add_subplot(2, 2, 1, projection='3d', label='0-1 subspace')
+    axis_12 = fig.add_subplot(2, 2, 2, projection='3d', label='1-2 subspace')
+    axis_alpha = fig.add_subplot(2, 2, 3)
+    axis_beta = fig.add_subplot(2, 2, 4)
+    #+END_SRC
+    The we create a qubit.
+    #+BEGIN_SRC python
+    qubit = Sfq3LevelFancyQubit((axis_01, axis_12), d_theta=pi/200, w_clock=2*pi*40e9,
+                                w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
+    #+END_SRC
+    Specify the cardinal states to visualize. In this case, we want all states.
+    #+BEGIN_SRC python
+    qubit.set_plot_kets(['G', 'E', 'P', 'M_I', 'P_I', 'M'])
+    #+END_SRC
+    Evolve the qubit. Note that this is a resonant sequence.
+    #+BEGIN_SRC python
+    for i in range(30):
+        qubit.pulse_and_precess()
+        for j in range(7):
+            qubit.precess()
+    #+END_SRC
+    Plot the Euler angles.
+    #+BEGIN_SRC python
+    axis_alpha.plot(qubit.alpha_list, label=r'$\alpha$', color='r')
+    axis_beta.plot(qubit.beta_list, label=r'$\beta$', color='b')
+    #+END_SRC
+    Show the plot.
+    #+BEGIN_SRC python
+    axis_alpha.legend()
+    axis_beta.legend()
+    plt.show()
+    #+END_SRC
+    [[./result.pdf]]
+*** Notes
+    + If you are using Jupyter notebook or IPython REPL, the qubit visualization supports interactive plotting.
