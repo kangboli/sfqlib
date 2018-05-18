@@ -3,3 +3,5 @@ build/**
 *.egg-info/**
 go_fancy.py
 .idea/*
+**/.ipynb_checkpoints/**
+

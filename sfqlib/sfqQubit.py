@@ -5,8 +5,8 @@ Do not change those three classes. Instead, subclass them to implement more feat
 """
 
 from scipy.linalg import expm
-from numpy import array, complex64, sqrt, pi, \
-    absolute, exp, dot, angle, cos, sin, conj, complex128
+from numpy import (array, complex64, sqrt, pi,
+    absolute, exp, dot, angle, cos, sin, conj, complex128, transpose, trace)
 from sfqlib.euler_angle import decompose_euler
 from bloch import Bloch
 import matplotlib.pyplot as plt
@@ -73,7 +73,6 @@ class SfqQubit(object):
         self.d_phi = self.w_10 / self.w_clock * 2 * pi
         self.d_phi3 = (self.w_10 + self.w_12) / self.w_10 * self.d_phi
         self.resonance_times = int(round(self.w_clock / self.w_10, 0))
-        self.rotated_kets = [self._ideal_rotation(ket) for ket in self.static_kets]
 
     @property
     def kets(self):
@@ -118,14 +117,6 @@ class SfqQubit(object):
         """Measure the fidelity. Implement in subclasses."""
         pass
 
-    def _ideal_rotation(self, ket):
-        """
-        Rotate the pauli states according to the ideal y-rotation.
-        Implement in subclasses.
-        :return: The rotated state
-        """
-        pass
-
 
 class Sfq3LevelQubit(SfqQubit):
     """Qubit with leakage level."""
@@ -140,6 +131,7 @@ class Sfq3LevelQubit(SfqQubit):
                [0.0, 0.0, 0.0]], dtype=complex128)
     a_dag = array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0],
                    [0.0, sqrt(2.0), 0.0]], dtype=complex128)
+
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         super(Sfq3LevelQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
@@ -150,19 +142,29 @@ class Sfq3LevelQubit(SfqQubit):
         self.u_sfq = expm(array(self.d_theta / 2.0 * (self.a_dag - self.a),
                                 dtype=complex128))
         self.u = array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=complex128)
+        self.ideal_gate = array([[cos(self.theta/2), -sin(self.theta/2), 0],
+                            [sin(self.theta/2), cos(self.theta/2), 0], [0, 0, 1]], dtype=complex128)
+        self.rotated_kets = [dot(self.ideal_gate, ket) for ket in self.static_kets]
 
-    def measure_fidelity(self, ignore_leakage=False):
-        kets, rotated_kets = self.kets, self.rotated_kets
-        if ignore_leakage:
-            kets = [[ket[0], ket[1], 0] for ket in kets]
-            rotated_kets = [[r_ket[0], r_ket[1], 0] for r_ket in rotated_kets]
-        fidelity = [pow(absolute(dot(conj(r_ket), ket)), 2) for r_ket, ket in zip(rotated_kets, kets)]
-        return sum(fidelity)/len(fidelity)
-
-    def _ideal_rotation(self, ket):
-        ideal_gate = array([[cos(self.theta/2), sin(self.theta/2), 0],
-                            [-sin(self.theta/2), cos(self.theta/2), 0], [0, 0, 1]], dtype=complex128)
-        return dot(ideal_gate, ket)
+    def measure_fidelity(self, method='states', ignore_leakage=False):
+        if method == 'states':
+            kets, rotated_kets = self.kets, self.rotated_kets
+            if ignore_leakage:
+                kets = [[ket[0], ket[1], 0] for ket in kets]
+                rotated_kets = [[r_ket[0], r_ket[1], 0] for r_ket in rotated_kets]
+            fidelities = [pow(absolute(dot(conj(r_ket), ket)), 2) for r_ket, ket in zip(rotated_kets, kets)]
+            return sum(fidelities)/len(fidelities)
+        elif method == 'gates':
+            p = array([[1, 0, 0],
+                       [0, 1, 0],
+                       [0, 0, 0]])
+            u_dag_p = dot(transpose(conj(self.u)), p)
+            u_p = dot(self.u, p)
+            term_i = trace(dot(u_dag_p, u_p))
+            term_ii = pow(abs(trace(dot(dot(p, self.ideal_gate), self.u))), 2)
+            return (term_i + term_ii) / 6
+        else:
+            raise Exception('No such method '+method)
 
 
 class Sfq2LevelQubit(SfqQubit):
@@ -175,6 +177,7 @@ class Sfq2LevelQubit(SfqQubit):
     static_kets = [g, e, m, m_i, p, p_i]
     a = array([[0.0, 1.0], [0.0, 0.0]], dtype=complex128)
     a_dag = array([[0.0, 0.0], [1.0, 0.0]], dtype=complex128)
+
     def __init__(self, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         # The leakage frequency is specified even though
@@ -184,16 +187,14 @@ class Sfq2LevelQubit(SfqQubit):
         self.u_free = array([[1.0, 0.0], [0.0, exp(-1.0j * self.d_phi)]], dtype=complex128)
         self.u_sfq = expm(array(self.d_theta / 2.0 * (self.a_dag - self.a), dtype=complex128))
         self.u = array([[1, 0], [0, 1]], dtype=complex128)
+        self.ideal_gate = array([[cos(self.theta/2), -sin(self.theta/2)],
+                                 [sin(self.theta/2), cos(self.theta/2)]], dtype=complex128)
+        self.rotated_kets = [dot(self.ideal_gate, ket) for ket in self.static_kets]
 
     def measure_fidelity(self):
         kets, rotated_kets = self.kets, self.rotated_kets
         fidelity = [pow(absolute(dot(conj(r_ket), ket)), 2) for r_ket, ket in zip(rotated_kets, kets)]
         return sum(fidelity)/len(fidelity)
-
-    def _ideal_rotation(self, ket):
-        ideal_gate = array([[cos(self.theta/2), sin(self.theta/2)],
-                            [-sin(self.theta/2), cos(self.theta/2)]], dtype=complex128)
-        return dot(ideal_gate, ket)
 
 
 """

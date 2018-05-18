@@ -1,5 +1,5 @@
 from scipy.linalg import expm
-from numpy import array, complex64, sqrt, pi, \
+from numpy import array, complex128, sqrt, pi, \
     absolute, exp, dot, angle, cos, sin, conj
 from sfqlib.euler_angle import decompose_euler
 
@@ -70,7 +70,7 @@ class SfqQubit(object):
         self.kets = [dot(self.usfq, ket) for ket in self.kets]
         self.precess()
 
-    def measure_fidelity():
+    def measure_fidelity(self):
         """Measure the fidelity. Implement in subclasses."""
         pass
 
@@ -111,25 +111,25 @@ class Sfq3LevelQubit(SfqQubit):
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         super(Sfq3LevelQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
         """Initialize all the kets and operators for the three level qubit."""
-        self.g = array([1.0, 0.0, 0.0], dtype=complex64)
-        self.e = array([0.0, 1.0, 0.0], dtype=complex64)
-        self.p = 1.0/sqrt(2.0)*array([1.0, 1.0, 0.0], dtype=complex64)
-        self.p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j, 0.0], dtype=complex64)
-        self.m = 1.0/sqrt(2.0)*array([1.0, -1.0, 0.0], dtype=complex64)
-        self.m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j, 0.0], dtype=complex64)
+        self.g = array([1.0, 0.0, 0.0], dtype=complex128)
+        self.e = array([0.0, 1.0, 0.0], dtype=complex128)
+        self.p = 1.0/sqrt(2.0)*array([1.0, 1.0, 0.0], dtype=complex128)
+        self.p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j, 0.0], dtype=complex128)
+        self.m = 1.0/sqrt(2.0)*array([1.0, -1.0, 0.0], dtype=complex128)
+        self.m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j, 0.0], dtype=complex128)
         self.order = ['g', 'e', 'm', 'm_i', 'p', 'p_i']
         self.pauli_kets = {'g': self.g, 'e': self.e, 'm': self.m,
                            'm_i': self.m_i, 'p': self.p, 'p_i': self.p_i}
         a = array([[0.0, 1.0, 0.0], [0.0, 0.0, sqrt(2.0)],
-                   [0.0, 0.0, 0.0]], dtype=complex64)
+                   [0.0, 0.0, 0.0]], dtype=complex128)
         a_dag = array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0],
-                       [0.0, sqrt(2.0), 0.0]], dtype=complex64)
+                       [0.0, sqrt(2.0), 0.0]], dtype=complex128)
         self.ufr = array([[1.0, 0.0, 0.0],
                           [0.0, exp(-1.0j * self.d_phi), 0.0],
                           [0.0, 0.0, exp(-1.0j * self.d_phi3)]],
-                         dtype=complex64)
+                         dtype=complex128)
         self.usfq = expm(array(self.d_theta/2.0*(a_dag-a),
-                               dtype=complex64))
+                               dtype=complex128))
         self.kets = [self.pauli_kets[key] for key in self.order]
         self.r_kets = [self.ideal_rotation(self.pauli_kets[key])
                        for key in self.order]
@@ -146,9 +146,9 @@ class Sfq3LevelQubit(SfqQubit):
         return sum(fidelity)/len(fidelity)
 
     def ideal_rotation(self, ket):
-        ideal_gate = array([[cos(self.theta/2), sin(self.theta/2), 0],
-                            [-sin(self.theta/2), cos(self.theta/2), 0],
-                            [0, 0, 1]], dtype=complex64)
+        ideal_gate = array([[cos(self.theta/2), -sin(self.theta/2), 0],
+                            [sin(self.theta/2), cos(self.theta/2), 0],
+                            [0, 0, 1]], dtype=complex128)
         return dot(ideal_gate, ket)
 
 
@@ -159,21 +159,21 @@ class Sfq2LevelQubit(SfqQubit):
         # leakage level is not present. This is a design error.
         super(Sfq2LevelQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
         """Initialize all the kets and operators for the two level qubit."""
-        self.g = array([1.0, 0.0], dtype=complex64)
-        self.e = array([0.0, 1.0], dtype=complex64)
-        self.p = 1.0/sqrt(2.0)*array([1.0, 1.0], dtype=complex64)
-        self.p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j], dtype=complex64)
-        self.m = 1.0/sqrt(2.0)*array([1.0, -1.0], dtype=complex64)
-        self.m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j], dtype=complex64)
+        self.g = array([1.0, 0.0], dtype=complex128)
+        self.e = array([0.0, 1.0], dtype=complex128)
+        self.p = 1.0/sqrt(2.0)*array([1.0, 1.0], dtype=complex128)
+        self.p_i = 1.0/sqrt(2.0)*array([1.0, 1.0j], dtype=complex128)
+        self.m = 1.0/sqrt(2.0)*array([1.0, -1.0], dtype=complex128)
+        self.m_i = 1.0/sqrt(2.0)*array([1.0, -1.0j], dtype=complex128)
         self.order = ['g', 'e', 'm', 'm_i', 'p', 'p_i']
         self.pauli_kets = {'g': self.g, 'e': self.e, 'm': self.m,
                            'm_i': self.m_i, 'p': self.p, 'p_i': self.p_i}
         self.ufr = array([[1.0, 0.0],
                           [0.0, exp(-1.0j * self.d_phi)]],
-                         dtype=complex64)
-        a = array([[0.0, 1.0], [0.0, 0.0]], dtype=complex64)
-        a_dag = array([[0.0, 0.0], [1.0, 0.0]], dtype=complex64)
-        self.usfq = expm(array(self.d_theta/2.0*(a_dag-a), dtype=complex64))
+                         dtype=complex128)
+        a = array([[0.0, 1.0], [0.0, 0.0]], dtype=complex128)
+        a_dag = array([[0.0, 0.0], [1.0, 0.0]], dtype=complex128)
+        self.usfq = expm(array(self.d_theta/2.0*(a_dag-a), dtype=complex128))
         self.kets = [self.pauli_kets[key] for key in self.order]
         self.r_kets = [self.ideal_rotation(self.pauli_kets[key])
                        for key in self.order]
@@ -185,9 +185,9 @@ class Sfq2LevelQubit(SfqQubit):
         return sum(fidelity)/len(fidelity)
 
     def ideal_rotation(self, ket):
-        ideal_gate = array([[cos(self.theta/2), sin(self.theta/2)],
-                            [-sin(self.theta/2), cos(self.theta/2)]],
-                           dtype=complex64)
+        ideal_gate = array([[cos(self.theta/2), -sin(self.theta/2)],
+                            [sin(self.theta/2), cos(self.theta/2)]],
+                           dtype=complex128)
         return dot(ideal_gate, ket)
 
 
