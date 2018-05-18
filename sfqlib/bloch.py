@@ -57,7 +57,7 @@ class Bloch():
     def __init__(self, axes, background=False):
         self.axes = axes
         self.background = background
-        self.sphere_color, self.sphere_alpha = 'lightcyan', 0.2
+        self.sphere_color, self.sphere_alpha = 'azure', 0.2
         self.frame_width, self.frame_alpha = 1, 0.2
         self.frame_color = 'gray'
         self.projection_source = 'origin'

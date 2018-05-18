@@ -1,15 +1,14 @@
 #+OPTIONS: toc:nil
 #+TITLE: SFQ Library
 #+AUTHOR: Kangbo
-* sfqQubt
-  Tools for SFQ research.
-** Installation
+[[./demo.png]]
+* Installation
    The code is developed in =python2=, but =python3= should not be a problem.
    #+BEGIN_SRC sh
    pip install sfqlib
    #+END_SRC
    For the latest version, install from the wheels in `dist/`.
-** Create a Qubit
+* Create a Qubit
   When a qubit is created, it starts at |0> state.
   However, all 6 cardinal states on the block sphere are tracked.
   There are two types of basic qubit.
@@ -26,7 +25,7 @@
   qubit = Sfq3LevelQubit(d_theta=pi/200, w_clock=2*pi*5e9,
         w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
   #+END_SRC
-** Qubit Evolution.
+* Qubit Evolution.
 *** Evolve a qubit
     We can do three basic things on a qubit.
     + precess for one clock period.
@@ -103,13 +102,13 @@
                                 for sequence_num in range(pow(2, n))]
           return all_seq_of_length_n
      #+END_SRC
-** Fancy Qubits
+* Fancy Qubits
    The qubit implementation discussed above runs at the speed of C++ when numpy uses MKL.
    To maintain that speed, operations that harm performance are separated into `FancyQubits`.
    Currently, there are two main features in `FancyQubits`.
    + Euler angles.
    + Visual Qubit.
-*** Create a Fancy Qubit
+** Create a Fancy Qubit
     To allow users to manipulate the visualization,
     the qubit will be visualized on a axis provided by the user.
 **** Sfq2LevelFancyQubit 
@@ -124,10 +123,10 @@
      qubit = Sfq3LevelFancyQubit((axis_01, axis_12), d_theta=pi/200, w_clock=2*pi*40e9,
                                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
      #+END_SRC
-*** Euler angles.
+** Euler angles.
     Fancy qubit records the Euler angles of the rotation at each step.
     For mathematical details, see the document `euler.pdf`.
-*** Visual Qubit
+** Visual Qubit
     *BEFORE* evolving the qubit,
     use the function `set_projection_source` to specify which cardinal states you would like visualize.
     The states are specified as the following.
@@ -137,7 +136,7 @@
     +'P_I': (+y)
     +'M': (-x)
     +'M_I': (-y)
-*** Usage
+** Usage
     First we initiate some axes.
     #+BEGIN_SRC python
     fig = plt.figure(figsize=(10, 10))
@@ -173,6 +172,6 @@
     axis_beta.legend()
     plt.show()
     #+END_SRC
-    [[./result.pdf]]
-*** Notes
+    [[./result.png]]
+** Notes
     + If you are using Jupyter notebook or IPython REPL, the qubit visualization supports interactive plotting.
