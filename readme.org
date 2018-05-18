@@ -1,6 +1,5 @@
 #+OPTIONS: toc:nil
 #+attr_html: :width 800px
-[[./logo.png]]
 [[./demo.png]]
 * Installation
    The code is developed in =python2=, but =python3= should not be a problem.
