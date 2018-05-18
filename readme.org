@@ -6,7 +6,7 @@
    #+BEGIN_SRC sh
    pip install sfqlib
    #+END_SRC
-   For the latest version, install from the wheels in `dist/`.
+   For the latest version, install from the wheels in dist/.
 * Create a Qubit
   When a qubit is created, it starts at |0> state.
   However, all 6 cardinal states on the block sphere are tracked.
@@ -103,8 +103,8 @@
      #+END_SRC
 * Fancy Qubits
    The qubit implementation discussed above runs at the speed of C++ when numpy uses MKL.
-   To maintain that speed, operations that harm performance are separated into `FancyQubits`.
-   Currently, there are two main features in `FancyQubits`.
+   To maintain that speed, operations that harm performance are separated into FancyQubits.
+   Currently, there are two main features in FancyQubits.
    + Euler angles.
    + Visual Qubit.
 ** Create a Fancy Qubit
@@ -129,14 +129,14 @@
     *BEFORE* evolving the qubit,
     use the function `set_projection_source` to specify which cardinal states you would like visualize.
     The states are specified as the following.
-    +'G': Ground (+z)
-    +'E': Excited (-z)
-    +'P': (+x)
-    +'P_I': (+y)
-    +'M': (-x)
-    +'M_I': (-y)
+    + 'G': Ground (+z)
+    + 'E': Excited (-z)
+    + 'P': (+x)
+    + 'P_I': (+y)
+    + 'M': (-x)
+    + 'M_I': (-y)
 ** Usage
-    First we initiate some axes.
+   First we initiate some axes.
     #+BEGIN_SRC python
     fig = plt.figure(figsize=(10, 10))
     axis_01 = fig.add_subplot(2, 2, 1, projection='3d', label='0-1 subspace')
@@ -144,7 +144,7 @@
     axis_alpha = fig.add_subplot(2, 2, 3)
     axis_beta = fig.add_subplot(2, 2, 4)
     #+END_SRC
-    The we create a qubit.
+    Then we create a qubit.
     #+BEGIN_SRC python
     qubit = Sfq3LevelFancyQubit((axis_01, axis_12), d_theta=pi/200, w_clock=2*pi*40e9,
                                 w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2)
