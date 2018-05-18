@@ -174,3 +174,4 @@
     [[./result.png]]
 ** Notes
     + If you are using Jupyter notebook or IPython REPL, the qubit visualization supports interactive plotting.
+      Examples are shown in folder ./notebooks.
