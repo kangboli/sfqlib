@@ -23,10 +23,17 @@ For the latest release, use the wheel on
 Overview
 ========
 
+For a background of the project, please refer to this white
+`paper <https://github.com/hannoeichel/sfqlib/blob/master/theory/theory.pdf>`_.
+
+The sfqlib currently offers three features.
+
+#. Construction and application of Time evolution operator.
+#. Euler angle decomposition for spine-:math:`\frac{1}{2}` rotation.
+#. Visualization of the qubit.
+
 The qubit classes are ordered as the following.
 
 .. inheritance-diagram:: sfqlib.sfqQubit
    :top-classes: sfqlib.sfqQubit.SfqQubit
 
-From left to right, the types of qubit have increasing number of features and
-decreasing performance.
