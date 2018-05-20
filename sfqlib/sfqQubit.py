@@ -48,7 +48,9 @@ class SfqSequence():
 
     def plot_sequence(self, ax):
         """Plot the pulse sequence as a bar code.
+
         :param ax: The axis on which the bar code will be plotted.
+
         """
         for index, bit in enumerate(self.binary):
             if bit == 1:
@@ -72,7 +74,7 @@ class SfqSequence():
 
 
 class SfqQubit(object):
-    """Qubit controlled by SFQ pulses. This class is to be subclassed."""
+    """Qubit controlled by SFQ pulses. *This class is to be subclassed.*"""
     g, e, p, p_i, m, m_i = None, None, None, None ,None, None
     static_kets = [g, e, m, m_i, p, p_i]
     a, a_dag = None, None
@@ -113,7 +115,7 @@ class SfqQubit(object):
         self.u = dot(self.u_sfq, self.u)
 
     def pulse_and_precess(self):
-        """Rotate the qubit for d_theta around y-axes,
+        """Rotate the qubit for d_theta around y-axis,
         then precess for one clock period."""
         self._pulse()
         self.precess()
@@ -254,6 +256,7 @@ class SfqFancyQubit(SfqQubit):
         """Initialize necessary settings for fancy features. This should be implemented in subclasses.
 
         :param axes: One, or a list of axes that will be used for visualization.
+
         """
         self.alpha_list = list()  # Doc: List of Euler angles Alpha.
         self.beta_list = list()  # Doc: List of Euler angles Alpha.
@@ -309,7 +312,11 @@ class Sfq2LevelFancyQubit(Sfq2LevelQubit, SfqFancyQubit):
     def __init__(self, axes, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         """Call the constructor of Sfq2LevelQubit.
-        Then prepare the visualization on the provided axes. """
+        Then prepare the visualization on the provided axes.
+
+        :param axes: Axes on which visualization will be made.
+
+         """
         super(Sfq2LevelFancyQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
         self._fancy_init(axes)
 
@@ -334,7 +341,11 @@ class Sfq3LevelFancyQubit(Sfq3LevelQubit, SfqFancyQubit):
     def __init__(self, axes, d_theta=pi/200, w_clock=2*pi*5e9,
                  w_qubit=(2*pi*5.0e9, 2*pi*9.8e9), theta=pi/2):
         """Call the constructor of Sfq3LevelQubit.
-        Then prepare the visualization on the provided axes. """
+        Then prepare the visualization on the provided axes.
+
+        :param axes: Axes on which visualization will be made.
+
+        """
         super(Sfq3LevelFancyQubit, self).__init__(d_theta, w_clock, w_qubit, theta)
         self._fancy_init(axes)
 

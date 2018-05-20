@@ -41,7 +41,7 @@ However, all 6 cardinal states on the block sphere are tracked.</p>
 <dl class="class">
 <dt id="sfqQubit.SfqQubit">
 <em class="property">class </em><code class="descclassname">sfqQubit.</code><code class="descname">SfqQubit</code><span class="sig-paren">(</span><em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#SfqQubit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.SfqQubit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Qubit controlled by SFQ pulses. This class is to be subclassed.</p>
+<dd><p>Qubit controlled by SFQ pulses. <em>This class is to be subclassed.</em></p>
 <dl class="method">
 <dt id="sfqQubit.SfqQubit.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#SfqQubit.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.SfqQubit.__init__" title="Permalink to this definition">¶</a></dt>
@@ -91,7 +91,7 @@ However, all 6 cardinal states on the block sphere are tracked.</p>
 <dl class="method">
 <dt id="sfqQubit.SfqQubit.pulse_and_precess">
 <code class="descname">pulse_and_precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#SfqQubit.pulse_and_precess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.SfqQubit.pulse_and_precess" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rotate the qubit for d_theta around y-axes,
+<dd><p>Rotate the qubit for d_theta around y-axis,
 then precess for one clock period.</p>
 </dd></dl>
 
@@ -119,12 +119,178 @@ then precess for one clock period.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="sfq2levelqubit">
+<h2>Sfq2LevelQubit<a class="headerlink" href="#sfq2levelqubit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sfqQubit.Sfq2LevelQubit">
+<em class="property">class </em><code class="descclassname">sfqQubit.</code><code class="descname">Sfq2LevelQubit</code><span class="sig-paren">(</span><em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq2LevelQubit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ideal two level qubit.</p>
+<dl class="attribute">
+<dt id="sfqQubit.Sfq2LevelQubit.kets">
+<code class="descname">kets</code><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.kets" title="Permalink to this definition">¶</a></dt>
+<dd><p>The 6 cardinal rotated states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The 6 cardinal rotated states.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelQubit.pulse_pattern">
+<code class="descname">pulse_pattern</code><span class="sig-paren">(</span><em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.pulse_pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evolve the qubit according to a sequence of
+0 (precession) and 1 (sfq pulse_and_precess).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> – The pulse sequence.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelQubit.resonance">
+<code class="descname">resonance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.resonance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a resonance pulse sequence to the qubit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelQubit.precess">
+<code class="descname">precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Precess the qubit for one clock period.</p>
+<blockquote>
+<div><p>Evolve according to the time evolution operator:</p>
+<div class="math notranslate nohighlight">
+    \begin{equation}
+U_{free} =
+\begin{bmatrix}
+1 &amp; 0 \\
+0 &amp; e^{-j\omega_{01} \tau}
+\end{bmatrix}
+\end{equation}</div></div></blockquote>
+<p>Where <span class="math notranslate nohighlight">\(\tau\)</span> is one clock period.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelQubit.pulse_and_precess">
+<code class="descname">pulse_and_precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.pulse_and_precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the qubit for d_theta around y-axis,
+then precess for one clock period.</p>
+<p>Evolve according to the time evolution operator</p>
+<div class="math notranslate nohighlight">
+    \begin{equation}
+U_{SFQ} =
+\begin{bmatrix}
+cos(d \theta / 2)           &amp;  - sin (d \theta / 2)\\
+sin (d \theta / 2)          &amp;  cos(d \theta / 2)
+\end{bmatrix}
+\end{equation}</div></dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelQubit.measure_fidelity">
+<code class="descname">measure_fidelity</code><span class="sig-paren">(</span><em>method='states'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq2LevelQubit.measure_fidelity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.measure_fidelity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Measure the fidelity of the rotation applied to the qubit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> – Currently only <cite>states</cite> is implemented. TODO Implement ‘gates’.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The fidelity.<p>If ‘states’ is provided,</p>
+<div class="math notranslate nohighlight">
+\[F_{avg} = \frac{1}{6} \sum_{\alpha} Tr\{U_G\rho_{\alpha}U^{\dagger}_G U_{id}\rho_{\alpha}U_{id}^{\dagger}\}\]</div>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Where <span class="math notranslate nohighlight">\(\alpha = \pm x, \pm y, \pm z\)</span>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 <div class="section" id="sfq3levelqubit">
 <h2>Sfq3LevelQubit<a class="headerlink" href="#sfq3levelqubit" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="sfqQubit.Sfq3LevelQubit">
 <em class="property">class </em><code class="descclassname">sfqQubit.</code><code class="descname">Sfq3LevelQubit</code><span class="sig-paren">(</span><em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq3LevelQubit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Qubit with one leakage level.</p>
+<dl class="attribute">
+<dt id="sfqQubit.Sfq3LevelQubit.kets">
+<code class="descname">kets</code><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.kets" title="Permalink to this definition">¶</a></dt>
+<dd><p>The 6 cardinal rotated states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The 6 cardinal rotated states.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelQubit.pulse_pattern">
+<code class="descname">pulse_pattern</code><span class="sig-paren">(</span><em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.pulse_pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evolve the qubit according to a sequence of
+0 (precession) and 1 (sfq pulse_and_precess).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> – The pulse sequence.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelQubit.resonance">
+<code class="descname">resonance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.resonance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a resonance pulse sequence to the qubit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelQubit.precess">
+<code class="descname">precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Precess the qubit for one clock period.</p>
+<p>Evolve according the the time evolution operator:</p>
+<div class="math notranslate nohighlight">
+\begin{equation}
+U_{free} =
+\begin{bmatrix}
+1 &amp; 0 &amp; 0 \\
+0 &amp; e^{-j\omega_{01} \tau} &amp; 0 \\
+0 &amp; 0 &amp; e^{-j\omega_{02} \tau}
+\end{bmatrix}
+\end{equation}</div><p>Where <span class="math notranslate nohighlight">\(\tau\)</span> is one clock period.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelQubit.pulse_and_precess">
+<code class="descname">pulse_and_precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.pulse_and_precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the qubit for d_theta around y-axis,
+then precess for one clock period.</p>
+<p>Evolve according to the time evolution operator</p>
+<div class="math notranslate nohighlight">
+\begin{equation}
+U_{SFQ} =
+\begin{bmatrix}
+-1\alpha           &amp;  -1 \beta         &amp; -\sqrt{2} \alpha\\
+1 \beta            &amp;  -3\alpha         &amp; -\sqrt{2} \beta\\
+\sqrt{2} \alpha    &amp;    \sqrt{2}\beta  &amp;-2 \alpha
+\end{bmatrix}
+\end{equation}</div><p>Where</p>
+<p><span class="math notranslate nohighlight">\(\alpha  = \left( -\frac{1}{3} cos \left(-\sqrt{3} \frac{\delta \theta}{2} \right) + \frac{1}{3} \right)\)</span>,</p>
+<p><span class="math notranslate nohighlight">\(\beta = \left( \frac{1}{\sqrt{3}} sin\left(\sqrt{3} \frac{\delta \theta}{2} \right) \right)\)</span>,</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="sfqQubit.Sfq3LevelQubit.measure_fidelity">
 <code class="descname">measure_fidelity</code><span class="sig-paren">(</span><em>method='states'</em>, <em>ignore_leakage=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq3LevelQubit.measure_fidelity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.measure_fidelity" title="Permalink to this definition">¶</a></dt>
@@ -151,133 +317,8 @@ then precess for one clock period.</p>
 <p>If ‘gates’ is provided,</p>
 <div class="math notranslate nohighlight">
 \[F_{avg} = \frac{1}{6} \left( Tr\{U^{\dagger}_G \mathcal{P} U_G \mathcal{P} \} + | Tr\{\mathcal{P} U_{id}^{\dagger} U_G\}|^2 \right)\]</div>
-<p>Where <span class="math notranslate nohighlight">\(U_{id}\)</span> is the ideal gate, and :math: <cite>mathcal{P}</cite> is
+<p>Where <span class="math notranslate nohighlight">\(U_{id}\)</span> is the ideal gate, and <span class="math notranslate nohighlight">\(\mathcal{P}\)</span> is
 the projection onto qubit subspace.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="sfqQubit.Sfq3LevelQubit.kets">
-<code class="descname">kets</code><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.kets" title="Permalink to this definition">¶</a></dt>
-<dd><p>The 6 cardinal rotated states.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The 6 cardinal rotated states.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="sfqQubit.Sfq3LevelQubit.precess">
-<code class="descname">precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.precess" title="Permalink to this definition">¶</a></dt>
-<dd><p>Precess the qubit for one clock period.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sfqQubit.Sfq3LevelQubit.pulse_and_precess">
-<code class="descname">pulse_and_precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.pulse_and_precess" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rotate the qubit for d_theta around y-axes,
-then precess for one clock period.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sfqQubit.Sfq3LevelQubit.pulse_pattern">
-<code class="descname">pulse_pattern</code><span class="sig-paren">(</span><em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.pulse_pattern" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evolve the qubit according to a sequence of
-0 (precession) and 1 (sfq pulse_and_precess).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> – The pulse sequence.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="sfqQubit.Sfq3LevelQubit.resonance">
-<code class="descname">resonance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelQubit.resonance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply a resonance pulse sequence to the qubit.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="sfq2levelqubit">
-<h2>Sfq2LevelQubit<a class="headerlink" href="#sfq2levelqubit" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="sfqQubit.Sfq2LevelQubit">
-<em class="property">class </em><code class="descclassname">sfqQubit.</code><code class="descname">Sfq2LevelQubit</code><span class="sig-paren">(</span><em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq2LevelQubit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Ideal two level qubit.</p>
-<dl class="method">
-<dt id="sfqQubit.Sfq2LevelQubit.measure_fidelity">
-<code class="descname">measure_fidelity</code><span class="sig-paren">(</span><em>method='states'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq2LevelQubit.measure_fidelity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.measure_fidelity" title="Permalink to this definition">¶</a></dt>
-<dd><p>Measure the fidelity of the rotation applied to the qubit.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> – Currently only <cite>states</cite> is implemented. TODO Implement ‘gates’.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The fidelity.</td>
-</tr>
-</tbody>
-</table>
-<p>If ‘states’ is provided,</p>
-<div class="math notranslate nohighlight">
-\[F_{avg} = \frac{1}{6} \sum_{\alpha} Tr\{U_G\rho_{\alpha}U^{\dagger}_G U_{id}\rho_{\alpha}U_{id}^{\dagger}\}\]</div>
-<p>Where <span class="math notranslate nohighlight">\(\alpha = \pm x, \pm y, \pm z\)</span>.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="sfqQubit.Sfq2LevelQubit.kets">
-<code class="descname">kets</code><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.kets" title="Permalink to this definition">¶</a></dt>
-<dd><p>The 6 cardinal rotated states.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The 6 cardinal rotated states.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="sfqQubit.Sfq2LevelQubit.precess">
-<code class="descname">precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.precess" title="Permalink to this definition">¶</a></dt>
-<dd><p>Precess the qubit for one clock period.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sfqQubit.Sfq2LevelQubit.pulse_and_precess">
-<code class="descname">pulse_and_precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.pulse_and_precess" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rotate the qubit for d_theta around y-axes,
-then precess for one clock period.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="sfqQubit.Sfq2LevelQubit.pulse_pattern">
-<code class="descname">pulse_pattern</code><span class="sig-paren">(</span><em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.pulse_pattern" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evolve the qubit according to a sequence of
-0 (precession) and 1 (sfq pulse_and_precess).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> – The pulse sequence.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="sfqQubit.Sfq2LevelQubit.resonance">
-<code class="descname">resonance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelQubit.resonance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply a resonance pulse sequence to the qubit.</p>
 </dd></dl>
 
 </dd></dl>
@@ -349,8 +390,15 @@ e.g. 6 -&gt; [0, 1, 1]</p>
 <dl class="method">
 <dt id="sfqQubit.SfqSequence.plot_sequence">
 <code class="descname">plot_sequence</code><span class="sig-paren">(</span><em>ax</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#SfqSequence.plot_sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.SfqSequence.plot_sequence" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot the pulse sequence as a bar code.
-:param ax: The axis on which the bar code will be plotted.</p>
+<dd><p>Plot the pulse sequence as a bar code.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ax</strong> – The axis on which the bar code will be plotted.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -368,8 +416,8 @@ e.g. 6 -&gt; [0, 1, 1]</p>
   <ul>
 <li><a class="reference internal" href="#">Simple Qubit.</a><ul>
 <li><a class="reference internal" href="#sfqqubit">SfqQubit</a></li>
-<li><a class="reference internal" href="#sfq3levelqubit">Sfq3LevelQubit</a></li>
 <li><a class="reference internal" href="#sfq2levelqubit">Sfq2LevelQubit</a></li>
+<li><a class="reference internal" href="#sfq3levelqubit">Sfq3LevelQubit</a></li>
 <li><a class="reference internal" href="#sfqsequence">SfqSequence</a></li>
 </ul>
 </li>
