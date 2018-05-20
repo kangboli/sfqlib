@@ -7,6 +7,7 @@
    pip install sfqlib
    #+END_SRC
    For the latest version, install from the wheels in dist/.
+   Documentation can be found at [[http://sfqlib.readthedocs.io/en/latest/][readthedocs.org]].
 * Create a Qubit
   When a qubit is created, it starts at |0> state.
   However, all 6 cardinal states on the block sphere are tracked.

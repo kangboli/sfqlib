@@ -5,9 +5,8 @@ Do not change those three classes. Instead, subclass them to implement more feat
 """
 
 from scipy.linalg import expm
-from numpy import (array, complex64, sqrt, pi,
-    absolute, exp, dot, angle, cosh, cos, sin, sinh,
-                   conj, complex128, transpose, trace, eye)
+from numpy import (array, sqrt, pi, absolute, exp, dot, cos, sin,
+                   conj, complex128, transpose, trace)
 from sfqlib.euler_angle import decompose_euler
 from bloch import Bloch
 import matplotlib.pyplot as plt
