@@ -6,4 +6,9 @@ go_fancy.py
 **/.ipynb_checkpoints/**
 **/.DS_Store
 **/.vscode
+auto/**
+theory.org
+*.bbl
+*.tex
+*.bib
 

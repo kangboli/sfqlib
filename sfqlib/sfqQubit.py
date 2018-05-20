@@ -90,11 +90,11 @@ class SfqQubit(object):
         """
         self.u_sfq = None
         self.u_free = None
-        self.w_10, self.w_12 = w_qubit 
+        self.w_10, self.w_02 = w_qubit
         self.w_clock = w_clock
         self.d_theta, self.theta = d_theta, theta
         self.d_phi = self.w_10 / self.w_clock * 2 * pi
-        self.d_phi3 = (self.w_10 + self.w_12) / self.w_10 * self.d_phi
+        self.d_phi3 = (self.w_10 + self.w_02) / self.w_10 * self.d_phi
         self.resonance_times = int(round(self.w_clock / self.w_10, 0))
 
     @property
