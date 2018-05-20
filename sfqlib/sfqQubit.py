@@ -168,14 +168,11 @@ class Sfq3LevelQubit(SfqQubit):
                              [0.0, 0.0, exp(-1.0j * self.d_phi3)]],
                             dtype=complex128)
 
-        eps = array([[0.0, -1.0, 0.0], [1.0, 0.0, -sqrt(2.0)],
-                     [0.0, sqrt(2.0), 0.0]], dtype=complex64)
-        self.u_sfq = pow(eps, 2) / 3.0 * (cosh(sqrt(3.0) * (-1.0j) * d_theta/2.0) - 1.0) + \
-           eps / (sqrt(3.0)) * 1.0j * sinh(sqrt(3.0) * (-1.0j) * d_theta/2.0) + eye(3, dtype=complex64)
-
+        self.u_sfq = expm(array(self.d_theta / 2.0 * (self.a_dag - self.a),
+                                dtype=complex128))
         self.u = array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=complex128)
         self.ideal_gate = array([[cos(self.theta/2), -sin(self.theta/2), 0],
-                            [sin(self.theta/2), cos(self.theta/2), 0], [0, 0, 1]], dtype=complex128)
+                                 [sin(self.theta/2), cos(self.theta/2), 0], [0, 0, 1]], dtype=complex128)
         self.rotated_kets = [dot(self.ideal_gate, ket) for ket in self.static_kets]
 
     def measure_fidelity(self, method='states', ignore_leakage=False):
