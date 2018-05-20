@@ -1,0 +1,165 @@
+#+OPTIONS: toc:nil
+#+LATEX_HEADER: \usepackage{amsmath}
+#+LATEX_HEADER: \usepackage{amssymb}
+#+LATEX_HEADER: \usepackage{xcolor}
+#+LATEX_HEADER: \usepackage{float}
+#+LATEX_HEADER: \usepackage{tikz}
+#+LATEX_HEADER: \usepackage{physics}
+#+LATEX_HEADER: \usepackage{setspace}
+#+LATEX_HEADER: \usepackage{titling}
+#+LATEX_HEADER: \usepackage{authblk}
+#+LATEX_HEADER: \usepackage{subcaption}
+#+LATEX_HEADER: \usepackage{graphicx}
+#+LATEX_HEADER: \usepackage[margin=1.0in]{geometry}
+#+LATEX_HEADER: \usepackage[backend=bibtex, style=numeric, sorting=none, giveninits=true, doi=true, url=false, isbn=false, eprint=false]{biblatex}
+#+LATEX_HEADER: \addbibresource{/Users/kangbo/Documents/ref/bib/library.bib}
+#+TITLE: Tools for SFQ simulation.
+#+AUTHOR: Kangbo Li
+* Introduction
+The qubit evolves according to the free precession Hamiltonian $H_0$ and the SFQ pulses $H_{SFQ}$
+                \begin{align}
+                H_0 &= \hbar 
+                \begin{bmatrix}
+                0 & 0 & 0\\
+                0 & w_{01}& 0 \\
+                0 & 0 & w_{12}
+                \end{bmatrix} \quad
+                H_{SFQ} = i C_c V(t) \sqrt{\frac{\hbar \omega_{01}}{2C}}
+                \begin{bmatrix}
+                0 & -1 & 0 \\
+                1 & 0 & -\sqrt{2} \\
+                0 & \sqrt{2} & 0 
+                \end{bmatrix} \label{eqn:sfq}\\ 
+                \int_0^{\tau}H_{SFQ} dt &= \hbar \frac{\delta \theta}{2}
+                \begin{bmatrix}
+                0 & -1 & 0 \\
+                1 & 0 & -\sqrt{2} \\
+                0 & \sqrt{2} & 0 
+                \end{bmatrix} \quad
+                \text{where} \quad
+                \delta \theta = \int_0^{\tau} 2 C_c V(t) \sqrt{\frac{\omega_{01}}{2C \hbar}} dt
+                \label{eqn:sfqint}
+                \end{align}
+
+One can exponentiate both matrices in closed form to obtain 
+the time evolution operator $U_0(t) = \int_{0}^{t} H_0 dt'$ and $U_{SFQ}$, providing that the precession can be ignored during $SFQ$ pulses.
+$U_0(t)$ is trivially obtained as in \ref{eqn:ufree}.
+
+\begin{equation}
+  U_0(t) =
+ \begin{bmatrix}
+1 & 0 & 0 \\
+0 & e^{-j\omega_{01} t} & 0 \\
+0 & 0 & e^{-j\omega_{12} t} 
+\end{bmatrix}
+\label{eqn:ufree} 
+\end{equation}
+
+To obtain $U_{SFQ}$, using the property $\epsilon^3 = -3\epsilon$, 
+where
+
+\begin{equation*}
+\epsilon = 
+\begin{bmatrix}
+0 & -1 & 0 \\
+1 & 0 & -\sqrt{2} \\
+0 & \sqrt{2} & 0 
+\end{bmatrix}
+\end{equation*}
+
+One can show that
+\begin{align}
+  \epsilon^n &= (-3)^{\frac{n-2}{2}}\epsilon^2 \quad \text{if } n \text{ is even}\\
+  \epsilon^n &= (-3)^{\frac{n-1}{2}}\epsilon \quad \text{if } n \text{ is odd}
+\end{align}
+Expanding $e^{j\frac{\delta \theta}{2}}$ and grouping the terms with even and odd powers of $i \delta \theta$ give
+\begin{align}
+  U_{SFQ} = \sum_{even, n\geq 2}^{\infty}\frac{(-3)^{\frac{n-2}{2}}\epsilon^2(i \delta \theta)^n}{n!} +
+\sum_{odd}^{\infty}\frac{(-3)^{\frac{n-1}{2}}\epsilon (i \delta \theta)^n}{n!}
+\label{eqn:expansion}
+\end{align}
+By resumming the sequence, one can show that
+\begin{align}
+  \epsilon^2 \left( -\frac{1}{3} cos \left(-\sqrt{3} \frac{\delta \theta}{2} \right) + \frac{1}{3}\right)
+  + \epsilon \left( \frac{1}{\sqrt{3}} sin\left( -\sqrt{3} \frac{\delta \theta}{2}\right) \right) + I
+\label{eqn:usfq}
+\end{align}
+By writing $\alpha  = \left( -\frac{1}{3} cos \left(-\sqrt{3} \frac{\delta \theta}{2} \right) + \frac{1}{3} \right)$ and $\beta = \left( \frac{1}{\sqrt{3}} sin\left( -\sqrt{3} \frac{\delta \theta}{2} \right) \right)$,
+one can reduce the time evolution operator to
+\begin{align}
+U_{SFQ} = \alpha \epsilon^2 + \beta \epsilon + I
+\label{eqn:usfqclose}
+\end{align}
+Expanding $U_{SFQ}$ into matrix form, we find
+\begin{equation}
+U_{SFQ} = \left [
+\begin{array}{ccc}
+  -1\alpha           &  -1 \beta         & -\sqrt{2} \alpha\\
+  1 \beta            &  -3\alpha         & -\sqrt{2} \beta\\
+  \sqrt{2} \alpha    &    \sqrt{2}\beta  &-2 \alpha
+\end{array}
+\right ]
+\label{eqn:usfqexp}
+\end{equation}
+If we compare equation \ref{eqn:usfqexp} with the ideal rotaion,
+\begin{equation}
+U_{SFQ} = \left [
+\begin{array}{ccc}
+  cos\left( \frac{\theta}{2} \right)           &  sin\left( \frac{\theta}{2} \right)         & 0 \\
+  -sin\left( \frac{\theta}{2} \right)           &  cos\left( \frac{\theta}{2} \right)         & 0 \\
+  0    &    0  & e^{i\phi}
+\end{array}
+\right ]
+\end{equation}
+there are a few things one can observe from equation \ref{eqn:usfqclose}
+\begin{itemize}
+\item $\epsilon^2$ has a shape of
+$\begin{bmatrix}
+X & 0 & X \\
+0 & X & 0 \\
+X & 0 & X 
+\end{bmatrix}$
+and $\epsilon$ has a shape of
+$\begin{bmatrix}
+0 & X & 0 \\
+X & 0 & X \\
+0 & X & 0 
+\end{bmatrix}$
+This shows that the coupling dominated by $\beta$,
+with the cross level coupling dominated by $\alpha$
+\item Because of the presence of the leakage, the rotation achieved in $01$
+  subspace is not a $\frac{\delta \theta}{2}$ rotation. Rather, the matrix
+  element are approximated by the parameters $\alpha$ and $\beta$.
+  For example, $-sin(\frac{\delta \theta}{2})$ is approximated by $\beta$.
+\item If $\delta \theta$ is small, $\alpha$ is also small, then one can ignore
+  the cross level coupling. However, large $\delta \theta$ will lead to
+  substantial cross level leakage.
+\end{itemize}
+The analysis is verified numerically.
+#+NAME: verified
+#+BEGIN_SRC python :eval no :results value :exports both
+from qutip import Qobj, qeye
+from numpy import sqrt, sinh, cosh
+from numpy.linalg import norm
+u = Qobj([[0.0, -1.0, 0.0], [1.0, 0.0, -sqrt(2.0)], [0.0, sqrt(2.0), 0.0]])
+
+
+def analitical(d_theta):
+    return - pow(u, 2) / 3.0 * (cosh(sqrt(3.0) * d_theta/2.0) - 1.0) +\
+        u / (sqrt(3.0)) * 1.0j * sinh(sqrt(3.0) * d_theta/2.0) + qeye(3)
+
+
+def compare(d_theta):
+    exp_theta = (1.0j * u * d_theta/2.0).expm()
+    return exp_theta - analitical(d_theta)
+
+
+return compare(0.1)
+#+END_SRC
+
+#+RESULTS: verified
+: Quantum object: dims = [[3], [3]], shape = (3, 3), type = oper, isherm = True
+: Qobj data =
+: [[ 0.  0.  0.]
+:  [ 0.  0.  0.]
+:  [ 0.  0.  0.]]

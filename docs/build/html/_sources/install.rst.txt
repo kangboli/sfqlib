@@ -1,0 +1,16 @@
+Install
+=======
+
+.. image:: demo.png
+
+sfqlib is developed in *python2*. Although the code may run with *python3* as
+well, it has not been tested with *python3*.
+
+To install with pip.
+
+.. code-block:: bash
+
+   pip install sfqlib
+
+For the latest release, use the wheel on
+`Github <https://github.com/hannoeichel/sfqlib/tree/master/dist>`_ instead.

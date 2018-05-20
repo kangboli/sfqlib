@@ -1,0 +1,450 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>sfqQubit &#8212; sfqlib 0.1.3 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for sfqQubit</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Single Flux Quantum applied to Qubits.</span>
+<span class="sd">The class SfqQubit, Sfq3LevelQubit, Sfq2LevelQubit are optimized for performance.</span>
+<span class="sd">Do not change those three classes. Instead, subclass them to implement more features.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">scipy.linalg</span> <span class="k">import</span> <span class="n">expm</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="k">import</span> <span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">complex64</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span>
+    <span class="n">absolute</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">dot</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">conj</span><span class="p">,</span> <span class="n">complex128</span><span class="p">,</span> <span class="n">transpose</span><span class="p">,</span> <span class="n">trace</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sfqlib.euler_angle</span> <span class="k">import</span> <span class="n">decompose_euler</span>
+<span class="kn">from</span> <span class="nn">bloch</span> <span class="k">import</span> <span class="n">Bloch</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="n">index_to_states</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;$G$&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;$E$&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;$P$&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;$P_I$&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;$M$&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="s1">&#39;$M_I$&#39;</span><span class="p">}</span>
+
+
+<span class="k">class</span> <span class="nc">MissingAxesException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Number of axes is not enough for visualization.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MissingAxesException</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s1">&#39;Two axes are required.&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SfqSequence"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqSequence">[docs]</a><span class="k">class</span> <span class="nc">SfqSequence</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;This class represents a pulse sequence.</span>
+<span class="sd">    It does decimal to binary conversion and visualization of the pulse sequence.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SfqSequence.__init__"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqSequence.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sequence_dec</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a pulse sequence of *length* long using a decimal number&gt;</span>
+<span class="sd">        If the sequence_dec is too large to be represented by a length bits,</span>
+<span class="sd">        it will be truncated.</span>
+
+<span class="sd">        :param sequence_dec: The sequence specified as an integer.</span>
+<span class="sd">        :param length: The length of the bit string.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">decimal</span> <span class="o">=</span> <span class="n">sequence_dec</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fidelity</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qubit</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">binary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Binary representation of the sequence.</span>
+
+<span class="sd">        :return: the sequence as a bit string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decimal_to_binary</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decimal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">))</span>
+
+<div class="viewcode-block" id="SfqSequence.plot_sequence"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqSequence.plot_sequence">[docs]</a>    <span class="k">def</span> <span class="nf">plot_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Plot the pulse sequence as a bar code.</span>
+<span class="sd">        :param ax: The axis on which the bar code will be plotted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">bit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">binary</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">index</span><span class="p">,</span> <span class="n">index</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">index</span><span class="p">,</span> <span class="n">index</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SfqSequence.decimal_to_binary"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqSequence.decimal_to_binary">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decimal_to_binary</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">digits</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a number from decimal to binary (in reversed order).</span>
+<span class="sd">        e.g. 6 -&gt; [0, 1, 1]</span>
+
+<span class="sd">        :param num: The decimal number to be converted.</span>
+<span class="sd">        :param digits: The number of binary digits allowed.</span>
+
+<span class="sd">        :rtype: Iterator[:class:`int`]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">digits</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">num</span> <span class="o">%</span> <span class="mi">2</span>
+            <span class="n">num</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="mi">2</span></div></div>
+
+
+<div class="viewcode-block" id="SfqQubit"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqQubit">[docs]</a><span class="k">class</span> <span class="nc">SfqQubit</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Qubit controlled by SFQ pulses. This class is to be subclassed.&quot;&quot;&quot;</span>
+    <span class="n">g</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p_i</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">m_i</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span> <span class="p">,</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="n">static_kets</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">m_i</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p_i</span><span class="p">]</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">a_dag</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+<div class="viewcode-block" id="SfqQubit.__init__"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqQubit.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">200</span><span class="p">,</span> <span class="n">w_clock</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5e9</span><span class="p">,</span>
+                 <span class="n">w_qubit</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5.0e9</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">9.8e9</span><span class="p">),</span> <span class="n">theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a qubit controlled by SFQ pulses.</span>
+
+<span class="sd">        :param d_theta: Angle of single y-rotation.</span>
+<span class="sd">        :param w_clock: Clock angular frequency</span>
+<span class="sd">        :param w_qubit: (Qubit angular frequency, Leakage level angular frequency)</span>
+<span class="sd">        :param theta: Total rotation.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_sfq</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_free</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w_10</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_12</span> <span class="o">=</span> <span class="n">w_qubit</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">w_clock</span> <span class="o">=</span> <span class="n">w_clock</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_theta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span> <span class="o">=</span> <span class="n">d_theta</span><span class="p">,</span> <span class="n">theta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_10</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_clock</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_phi3</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w_10</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_12</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_10</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_phi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resonance_times</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w_clock</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_10</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">kets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The 6 cardinal rotated states.</span>
+
+<span class="sd">        :return: The 6 cardinal rotated states.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="n">ket</span><span class="p">)</span> <span class="k">for</span> <span class="n">ket</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_kets</span><span class="p">]</span>
+
+<div class="viewcode-block" id="SfqQubit.precess"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqQubit.precess">[docs]</a>    <span class="k">def</span> <span class="nf">precess</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Precess the qubit for one clock period.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u_free</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply a SFQ pulse to the qubit.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u_sfq</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SfqQubit.pulse_and_precess"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqQubit.pulse_and_precess">[docs]</a>    <span class="k">def</span> <span class="nf">pulse_and_precess</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Rotate the qubit for d_theta around y-axes,</span>
+<span class="sd">        then precess for one clock period.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pulse</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">precess</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SfqQubit.resonance"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqQubit.resonance">[docs]</a>    <span class="k">def</span> <span class="nf">resonance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply a resonance pulse sequence to the qubit.&quot;&quot;&quot;</span>
+        <span class="n">num_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_theta</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pulse_and_precess</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resonance_times</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">precess</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SfqQubit.pulse_pattern"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqQubit.pulse_pattern">[docs]</a>    <span class="k">def</span> <span class="nf">pulse_pattern</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evolve the qubit according to a sequence of</span>
+<span class="sd">        0 (precession) and 1 (sfq pulse_and_precess).</span>
+
+<span class="sd">        :param pattern: The pulse sequence.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="n">pattern</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pulse_and_precess</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">precess</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SfqQubit.measure_fidelity"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.SfqQubit.measure_fidelity">[docs]</a>    <span class="k">def</span> <span class="nf">measure_fidelity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Measure the fidelity. Implement in subclasses.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="Sfq3LevelQubit"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.Sfq3LevelQubit">[docs]</a><span class="k">class</span> <span class="nc">Sfq3LevelQubit</span><span class="p">(</span><span class="n">SfqQubit</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Qubit with one leakage level.&quot;&quot;&quot;</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">p_i</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="n">j</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">m_i</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="n">j</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">static_kets</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">m_i</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p_i</span><span class="p">]</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)],</span>
+               <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">a_dag</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+                   <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">200</span><span class="p">,</span> <span class="n">w_clock</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5e9</span><span class="p">,</span>
+                 <span class="n">w_qubit</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5.0e9</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">9.8e9</span><span class="p">),</span> <span class="n">theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Sfq3LevelQubit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">d_theta</span><span class="p">,</span> <span class="n">w_clock</span><span class="p">,</span> <span class="n">w_qubit</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_free</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+                             <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_phi</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">],</span>
+                             <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_phi3</span><span class="p">)]],</span>
+                            <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_sfq</span> <span class="o">=</span> <span class="n">expm</span><span class="p">(</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_theta</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a_dag</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">),</span>
+                                <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ideal_gate</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span>
+                            <span class="p">[</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotated_kets</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ideal_gate</span><span class="p">,</span> <span class="n">ket</span><span class="p">)</span> <span class="k">for</span> <span class="n">ket</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_kets</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Sfq3LevelQubit.measure_fidelity"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.Sfq3LevelQubit.measure_fidelity">[docs]</a>    <span class="k">def</span> <span class="nf">measure_fidelity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;states&#39;</span><span class="p">,</span> <span class="n">ignore_leakage</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Measure the fidelity of the rotation applied to the qubit.</span>
+<span class="sd">        </span>
+<span class="sd">        :param method: Either &#39;states&#39; or &#39;gates&#39;.</span>
+<span class="sd">        :param ignore_leakage: Do not account for the leakage level when computing fidelity.</span>
+
+<span class="sd">        :return: The fidelity.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;states&#39;</span><span class="p">:</span>
+            <span class="n">kets</span><span class="p">,</span> <span class="n">rotated_kets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotated_kets</span>
+            <span class="k">if</span> <span class="n">ignore_leakage</span><span class="p">:</span>
+                <span class="n">kets</span> <span class="o">=</span> <span class="p">[[</span><span class="n">ket</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ket</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">ket</span> <span class="ow">in</span> <span class="n">kets</span><span class="p">]</span>
+                <span class="n">rotated_kets</span> <span class="o">=</span> <span class="p">[[</span><span class="n">r_ket</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">r_ket</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r_ket</span> <span class="ow">in</span> <span class="n">rotated_kets</span><span class="p">]</span>
+            <span class="n">fidelities</span> <span class="o">=</span> <span class="p">[</span><span class="nb">pow</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">conj</span><span class="p">(</span><span class="n">r_ket</span><span class="p">),</span> <span class="n">ket</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">r_ket</span><span class="p">,</span> <span class="n">ket</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rotated_kets</span><span class="p">,</span> <span class="n">kets</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">fidelities</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">fidelities</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;gates&#39;</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+            <span class="n">u_dag_p</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="n">transpose</span><span class="p">(</span><span class="n">conj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">)),</span> <span class="n">p</span><span class="p">)</span>
+            <span class="n">u_p</span> <span class="o">=</span> <span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+            <span class="n">term_i</span> <span class="o">=</span> <span class="n">trace</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">u_dag_p</span><span class="p">,</span> <span class="n">u_p</span><span class="p">))</span>
+            <span class="n">term_ii</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">trace</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ideal_gate</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">))),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">term_i</span> <span class="o">+</span> <span class="n">term_ii</span><span class="p">)</span> <span class="o">/</span> <span class="mi">6</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;No such method &#39;</span><span class="o">+</span><span class="n">method</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Sfq2LevelQubit"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.Sfq2LevelQubit">[docs]</a><span class="k">class</span> <span class="nc">Sfq2LevelQubit</span><span class="p">(</span><span class="n">SfqQubit</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ideal two level qubit.&quot;&quot;&quot;</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">p_i</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="n">j</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">m_i</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="n">j</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">static_kets</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">m_i</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p_i</span><span class="p">]</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+    <span class="n">a_dag</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">200</span><span class="p">,</span> <span class="n">w_clock</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5e9</span><span class="p">,</span>
+                 <span class="n">w_qubit</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5.0e9</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">9.8e9</span><span class="p">),</span> <span class="n">theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The leakage frequency is specified even though </span>
+<span class="sd">        leakage level is not present. This is a design error.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Sfq2LevelQubit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">d_theta</span><span class="p">,</span> <span class="n">w_clock</span><span class="p">,</span> <span class="n">w_qubit</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_free</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_phi</span><span class="p">)]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_sfq</span> <span class="o">=</span> <span class="n">expm</span><span class="p">(</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_theta</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a_dag</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ideal_gate</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="mi">2</span><span class="p">)],</span>
+                                 <span class="p">[</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="mi">2</span><span class="p">)]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">complex128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rotated_kets</span> <span class="o">=</span> <span class="p">[</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ideal_gate</span><span class="p">,</span> <span class="n">ket</span><span class="p">)</span> <span class="k">for</span> <span class="n">ket</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_kets</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Sfq2LevelQubit.measure_fidelity"><a class="viewcode-back" href="../Simple_Qubit.html#sfqQubit.Sfq2LevelQubit.measure_fidelity">[docs]</a>    <span class="k">def</span> <span class="nf">measure_fidelity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;states&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Measure the fidelity of the rotation applied to the qubit.</span>
+
+<span class="sd">        :param method: Currently only `states` is implemented. TODO Implement &#39;gates&#39;.</span>
+
+<span class="sd">        :return: The fidelity.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kets</span><span class="p">,</span> <span class="n">rotated_kets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotated_kets</span>
+        <span class="n">fidelity</span> <span class="o">=</span> <span class="p">[</span><span class="nb">pow</span><span class="p">(</span><span class="n">absolute</span><span class="p">(</span><span class="n">dot</span><span class="p">(</span><span class="n">conj</span><span class="p">(</span><span class="n">r_ket</span><span class="p">),</span> <span class="n">ket</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">r_ket</span><span class="p">,</span> <span class="n">ket</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rotated_kets</span><span class="p">,</span> <span class="n">kets</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">fidelity</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">fidelity</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SfqFancyQubit"><a class="viewcode-back" href="../Fancy_Qubit.html#sfqQubit.SfqFancyQubit">[docs]</a><span class="k">class</span> <span class="nc">SfqFancyQubit</span><span class="p">(</span><span class="n">SfqQubit</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Qubit enhanced with additional features, which are separated from the basic qubits to preserve their speed.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SfqFancyQubit.__init__"><a class="viewcode-back" href="../Fancy_Qubit.html#sfqQubit.SfqFancyQubit.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">200</span><span class="p">,</span> <span class="n">w_clock</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5e9</span><span class="p">,</span>
+                 <span class="n">w_qubit</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5.0e9</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">9.8e9</span><span class="p">),</span> <span class="n">theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This constructor is not intended to be used. Do not call this.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SfqFancyQubit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">d_theta</span><span class="p">,</span> <span class="n">w_clock</span><span class="p">,</span>
+                                                  <span class="n">w_qubit</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_fancy_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize necessary settings for fancy features. This should be implemented in subclasses.</span>
+
+<span class="sd">        :param axes: One, or a list of axes that will be used for visualization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>  <span class="c1"># Doc: List of Euler angles Alpha.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>  <span class="c1"># Doc: List of Euler angles Alpha.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>  <span class="c1"># Doc: List of Euler angles Alpha.</span>
+
+<div class="viewcode-block" id="SfqFancyQubit.set_plot_kets"><a class="viewcode-back" href="../Fancy_Qubit.html#sfqQubit.SfqFancyQubit.set_plot_kets">[docs]</a>    <span class="k">def</span> <span class="nf">set_plot_kets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot_kets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Choose which kets to plot. Plotting too many kets may lead to performance issues.</span>
+
+<span class="sd">        :param plot_kets: A list of kets to plot. The followings are supported.</span>
+
+<span class="sd">        * &#39;G&#39;: Ground (+z)</span>
+<span class="sd">        * &#39;E&#39;: Excited (-z)</span>
+<span class="sd">        * &#39;P&#39;: (+x)</span>
+<span class="sd">        * &#39;P_I&#39;: (+y)</span>
+<span class="sd">        * &#39;M&#39;: (-x)</span>
+<span class="sd">        * &#39;M_I&#39;: (-y)</span>
+
+<span class="sd">        For example, to plot the ground state and the excited state, pass in [&#39;G&#39;, &#39;E&#39;].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;G&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;P_I&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;M_I&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">plot_kets</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kets_to_plot_index</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kets_to_plot_index</span> <span class="o">=</span> <span class="p">[</span><span class="n">state_to_index</span><span class="p">[</span><span class="n">ket</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span> <span class="k">for</span> <span class="n">ket</span> <span class="ow">in</span> <span class="n">plot_kets</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_bloch_sphere</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SfqFancyQubit.precess"><a class="viewcode-back" href="../Fancy_Qubit.html#sfqQubit.SfqFancyQubit.precess">[docs]</a>    <span class="k">def</span> <span class="nf">precess</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SfqFancyQubit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">precess</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_projection_source</span><span class="p">(</span><span class="s1">&#39;z-axis&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_bloch_sphere</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_record_euler</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SfqFancyQubit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_pulse</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_projection_source</span><span class="p">(</span><span class="s1">&#39;origin&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_bloch_sphere</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_record_euler</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_set_projection_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_update_bloch_sphere</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_record_euler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">decompose_euler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="p">,</span> <span class="n">unimodular_check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gamma</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Sfq2LevelFancyQubit"><a class="viewcode-back" href="../Fancy_Qubit.html#sfqQubit.Sfq2LevelFancyQubit">[docs]</a><span class="k">class</span> <span class="nc">Sfq2LevelFancyQubit</span><span class="p">(</span><span class="n">Sfq2LevelQubit</span><span class="p">,</span> <span class="n">SfqFancyQubit</span><span class="p">):</span>
+<div class="viewcode-block" id="Sfq2LevelFancyQubit.__init__"><a class="viewcode-back" href="../Fancy_Qubit.html#sfqQubit.Sfq2LevelFancyQubit.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axes</span><span class="p">,</span> <span class="n">d_theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">200</span><span class="p">,</span> <span class="n">w_clock</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5e9</span><span class="p">,</span>
+                 <span class="n">w_qubit</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5.0e9</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">9.8e9</span><span class="p">),</span> <span class="n">theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call the constructor of Sfq2LevelQubit.</span>
+<span class="sd">        Then prepare the visualization on the provided axes. &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Sfq2LevelFancyQubit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">d_theta</span><span class="p">,</span> <span class="n">w_clock</span><span class="p">,</span> <span class="n">w_qubit</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fancy_init</span><span class="p">(</span><span class="n">axes</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_fancy_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axes</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Sfq2LevelFancyQubit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_fancy_init</span><span class="p">(</span><span class="n">axes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch</span> <span class="o">=</span> <span class="n">Bloch</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">axes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\left|0\right&gt;$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.1</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\left|1\right&gt;$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_projection_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch</span><span class="o">.</span><span class="n">set_projection_source</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_bloch_sphere</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">ket</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kets</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kets_to_plot_index</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bloch</span><span class="o">.</span><span class="n">shovel_ket</span><span class="p">(</span><span class="n">ket</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">index_to_states</span><span class="p">[</span><span class="n">index</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="Sfq3LevelFancyQubit"><a class="viewcode-back" href="../Fancy_Qubit.html#sfqQubit.Sfq3LevelFancyQubit">[docs]</a><span class="k">class</span> <span class="nc">Sfq3LevelFancyQubit</span><span class="p">(</span><span class="n">Sfq3LevelQubit</span><span class="p">,</span> <span class="n">SfqFancyQubit</span><span class="p">):</span>
+<div class="viewcode-block" id="Sfq3LevelFancyQubit.__init__"><a class="viewcode-back" href="../Fancy_Qubit.html#sfqQubit.Sfq3LevelFancyQubit.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axes</span><span class="p">,</span> <span class="n">d_theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">200</span><span class="p">,</span> <span class="n">w_clock</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5e9</span><span class="p">,</span>
+                 <span class="n">w_qubit</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">5.0e9</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="mf">9.8e9</span><span class="p">),</span> <span class="n">theta</span><span class="o">=</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call the constructor of Sfq3LevelQubit.</span>
+<span class="sd">        Then prepare the visualization on the provided axes. &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Sfq3LevelFancyQubit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">d_theta</span><span class="p">,</span> <span class="n">w_clock</span><span class="p">,</span> <span class="n">w_qubit</span><span class="p">,</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fancy_init</span><span class="p">(</span><span class="n">axes</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_fancy_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axes</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Sfq3LevelFancyQubit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_fancy_init</span><span class="p">(</span><span class="n">axes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">axes</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MissingAxesException</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(),</span> <span class="nb">list</span><span class="p">()</span> <span class="p">,</span><span class="nb">list</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_01</span> <span class="o">=</span> <span class="n">Bloch</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_01</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_01</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_01</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\left|0\right&gt;$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_01</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.1</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\left|1\right&gt;$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_12</span> <span class="o">=</span> <span class="n">Bloch</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_12</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_12</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_12</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\left|1\right&gt;$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_12</span><span class="o">.</span><span class="n">axes</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.1</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\left|2\right&gt;$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_projection_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_01</span><span class="o">.</span><span class="n">set_projection_source</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bloch_12</span><span class="o">.</span><span class="n">set_projection_source</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_bloch_sphere</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">kets_01</span> <span class="o">=</span> <span class="p">[[</span><span class="n">ket</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ket</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">ket</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kets</span><span class="p">]</span>
+        <span class="n">kets_12</span> <span class="o">=</span> <span class="p">[[</span><span class="n">ket</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ket</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="k">for</span> <span class="n">ket</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kets</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">ket</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">kets_01</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kets_to_plot_index</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bloch_01</span><span class="o">.</span><span class="n">shovel_ket</span><span class="p">(</span><span class="n">ket</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">index_to_states</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">ket</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">kets_12</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kets_to_plot_index</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bloch_12</span><span class="o">.</span><span class="n">shovel_ket</span><span class="p">(</span><span class="n">ket</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">trace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">index_to_states</span><span class="p">[</span><span class="n">index</span><span class="p">])</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Kangbo Li.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,8 @@
+<map id="inheritancedf0729acd1" name="inheritancedf0729acd1">
+<area shape="rect" id="node1" title="Number of axes is not enough for visualization." alt="" coords="5,99,242,122"/>
+<area shape="rect" id="node3" title="Ideal two level qubit." alt="" coords="289,5,485,29"/>
+<area shape="rect" id="node4" title="Qubit enhanced with additional features, which are separated from the basic qubits to preserve their speed." alt="" coords="290,52,483,75"/>
+<area shape="rect" id="node5" title="Qubit controlled by SFQ pulses. This class is to be subclassed." alt="" coords="45,52,202,75"/>
+<area shape="rect" id="node7" title="Qubit with one leakage level." alt="" coords="289,99,485,122"/>
+<area shape="rect" id="node8" title="This class represents a pulse sequence." alt="" coords="31,5,216,29"/>
+</map>

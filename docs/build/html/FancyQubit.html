@@ -1,0 +1,426 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Fancy Qubits. &#8212; sfqlib 0.1.3 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Qubit." href="Qubit.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fancy-qubits">
+<h1>Fancy Qubits.<a class="headerlink" href="#fancy-qubits" title="Permalink to this headline">¶</a></h1>
+<p>The basic qubit runs at the speed of C++ when numpy uses MKL.
+To maintain that speed, operations that harm performance are separated into FancyQubits.
+Currently, there are two main features in FancyQubits.</p>
+<ol class="arabic simple">
+<li>Euler angle.</li>
+<li>Qubit Visualization.</li>
+</ol>
+<div class="section" id="sfqfancyqubit">
+<h2>SfqFancyQubit<a class="headerlink" href="#sfqfancyqubit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sfqQubit.SfqFancyQubit">
+<em class="property">class </em><code class="descclassname">sfqQubit.</code><code class="descname">SfqFancyQubit</code><span class="sig-paren">(</span><em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#SfqFancyQubit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.SfqFancyQubit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Qubit enhanced with additional features, which are separated from the basic qubits to preserve their speed.</p>
+<dl class="method">
+<dt id="sfqQubit.SfqFancyQubit.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#SfqFancyQubit.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.SfqFancyQubit.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>This constructor is not intended to be used. Do not call this.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sfqQubit.SfqFancyQubit.alpha_list">
+<code class="descname">alpha_list</code><a class="headerlink" href="#sfqQubit.SfqFancyQubit.alpha_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of <span class="math notranslate nohighlight">\(\alpha\)</span> Euler angle</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sfqQubit.SfqFancyQubit.beta_list">
+<code class="descname">beta_list</code><a class="headerlink" href="#sfqQubit.SfqFancyQubit.beta_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of <span class="math notranslate nohighlight">\(\beta\)</span> Euler angle</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sfqQubit.SfqFancyQubit.gamma_list">
+<code class="descname">gamma_list</code><a class="headerlink" href="#sfqQubit.SfqFancyQubit.gamma_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of <span class="math notranslate nohighlight">\(\gamma\)</span> Euler angle</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sfqQubit.SfqFancyQubit.kets">
+<code class="descname">kets</code><a class="headerlink" href="#sfqQubit.SfqFancyQubit.kets" title="Permalink to this definition">¶</a></dt>
+<dd><p>The 6 cardinal rotated states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The 6 cardinal rotated states.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.SfqFancyQubit.measure_fidelity">
+<code class="descname">measure_fidelity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.SfqFancyQubit.measure_fidelity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Measure the fidelity. Implement in subclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.SfqFancyQubit.precess">
+<code class="descname">precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#SfqFancyQubit.precess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.SfqFancyQubit.precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Precess the qubit for one clock period.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.SfqFancyQubit.pulse_and_precess">
+<code class="descname">pulse_and_precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.SfqFancyQubit.pulse_and_precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the qubit for d_theta around y-axes,
+then precess for one clock period.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.SfqFancyQubit.pulse_pattern">
+<code class="descname">pulse_pattern</code><span class="sig-paren">(</span><em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.SfqFancyQubit.pulse_pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evolve the qubit according to a sequence of
+0 (precession) and 1 (sfq pulse_and_precess).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> – The pulse sequence.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.SfqFancyQubit.resonance">
+<code class="descname">resonance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.SfqFancyQubit.resonance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a resonance pulse sequence to the qubit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.SfqFancyQubit.set_plot_kets">
+<code class="descname">set_plot_kets</code><span class="sig-paren">(</span><em>plot_kets=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#SfqFancyQubit.set_plot_kets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.SfqFancyQubit.set_plot_kets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Choose which kets to plot. Plotting too many kets may lead to performance issues.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plot_kets</strong> – A list of kets to plot. The followings are supported.</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>‘G’: Ground (+z)</li>
+<li>‘E’: Excited (-z)</li>
+<li>‘P’: (+x)</li>
+<li>‘P_I’: (+y)</li>
+<li>‘M’: (-x)</li>
+<li>‘M_I’: (-y)</li>
+</ul>
+<p>For example, to plot the ground state and the excited state, pass in [‘G’, ‘E’].</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="sfq2levelfancyqubit">
+<h2>Sfq2LevelFancyQubit<a class="headerlink" href="#sfq2levelfancyqubit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sfqQubit.Sfq2LevelFancyQubit">
+<em class="property">class </em><code class="descclassname">sfqQubit.</code><code class="descname">Sfq2LevelFancyQubit</code><span class="sig-paren">(</span><em>axes</em>, <em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq2LevelFancyQubit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq2LevelFancyQubit" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="sfqQubit.Sfq2LevelFancyQubit.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>axes</em>, <em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq2LevelFancyQubit.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq2LevelFancyQubit.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the constructor of Sfq2LevelQubit.
+Then prepare the visualization on the provided axes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sfqQubit.Sfq2LevelFancyQubit.kets">
+<code class="descname">kets</code><a class="headerlink" href="#sfqQubit.Sfq2LevelFancyQubit.kets" title="Permalink to this definition">¶</a></dt>
+<dd><p>The 6 cardinal rotated states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The 6 cardinal rotated states.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelFancyQubit.measure_fidelity">
+<code class="descname">measure_fidelity</code><span class="sig-paren">(</span><em>method='states'</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelFancyQubit.measure_fidelity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Measure the fidelity of the rotation applied to the qubit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> – Currently only <cite>states</cite> is implemented. TODO Implement ‘gates’.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The fidelity.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelFancyQubit.precess">
+<code class="descname">precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelFancyQubit.precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Precess the qubit for one clock period.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelFancyQubit.pulse_and_precess">
+<code class="descname">pulse_and_precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelFancyQubit.pulse_and_precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the qubit for d_theta around y-axes,
+then precess for one clock period.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelFancyQubit.pulse_pattern">
+<code class="descname">pulse_pattern</code><span class="sig-paren">(</span><em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelFancyQubit.pulse_pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evolve the qubit according to a sequence of
+0 (precession) and 1 (sfq pulse_and_precess).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> – The pulse sequence.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelFancyQubit.resonance">
+<code class="descname">resonance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelFancyQubit.resonance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a resonance pulse sequence to the qubit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq2LevelFancyQubit.set_plot_kets">
+<code class="descname">set_plot_kets</code><span class="sig-paren">(</span><em>plot_kets=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq2LevelFancyQubit.set_plot_kets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Choose which kets to plot. Plotting too many kets may lead to performance issues.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plot_kets</strong> – A list of kets to plot. The followings are supported.</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>‘G’: Ground (+z)</li>
+<li>‘E’: Excited (-z)</li>
+<li>‘P’: (+x)</li>
+<li>‘P_I’: (+y)</li>
+<li>‘M’: (-x)</li>
+<li>‘M_I’: (-y)</li>
+</ul>
+<p>For example, to plot the ground state and the excited state, pass in [‘G’, ‘E’].</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="sfq3levelfancyqubit">
+<h2>Sfq3LevelFancyQubit<a class="headerlink" href="#sfq3levelfancyqubit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sfqQubit.Sfq3LevelFancyQubit">
+<em class="property">class </em><code class="descclassname">sfqQubit.</code><code class="descname">Sfq3LevelFancyQubit</code><span class="sig-paren">(</span><em>axes</em>, <em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq3LevelFancyQubit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq3LevelFancyQubit" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="sfqQubit.Sfq3LevelFancyQubit.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>axes</em>, <em>d_theta=0.015707963267948967</em>, <em>w_clock=31415926535.89793</em>, <em>w_qubit=(31415926535.89793</em>, <em>61575216010.35995)</em>, <em>theta=1.5707963267948966</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sfqQubit.html#Sfq3LevelFancyQubit.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sfqQubit.Sfq3LevelFancyQubit.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the constructor of Sfq3LevelQubit.
+Then prepare the visualization on the provided axes.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sfqQubit.Sfq3LevelFancyQubit.kets">
+<code class="descname">kets</code><a class="headerlink" href="#sfqQubit.Sfq3LevelFancyQubit.kets" title="Permalink to this definition">¶</a></dt>
+<dd><p>The 6 cardinal rotated states.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The 6 cardinal rotated states.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelFancyQubit.measure_fidelity">
+<code class="descname">measure_fidelity</code><span class="sig-paren">(</span><em>method='states'</em>, <em>ignore_leakage=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelFancyQubit.measure_fidelity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Measure the fidelity of the rotation applied to the qubit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>method</strong> – Either ‘states’ or ‘gates’.</li>
+<li><strong>ignore_leakage</strong> – Do not account for the leakage level when computing fidelity.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The fidelity.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelFancyQubit.precess">
+<code class="descname">precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelFancyQubit.precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Precess the qubit for one clock period.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelFancyQubit.pulse_and_precess">
+<code class="descname">pulse_and_precess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelFancyQubit.pulse_and_precess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the qubit for d_theta around y-axes,
+then precess for one clock period.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelFancyQubit.pulse_pattern">
+<code class="descname">pulse_pattern</code><span class="sig-paren">(</span><em>pattern</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelFancyQubit.pulse_pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evolve the qubit according to a sequence of
+0 (precession) and 1 (sfq pulse_and_precess).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> – The pulse sequence.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelFancyQubit.resonance">
+<code class="descname">resonance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelFancyQubit.resonance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a resonance pulse sequence to the qubit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sfqQubit.Sfq3LevelFancyQubit.set_plot_kets">
+<code class="descname">set_plot_kets</code><span class="sig-paren">(</span><em>plot_kets=None</em><span class="sig-paren">)</span><a class="headerlink" href="#sfqQubit.Sfq3LevelFancyQubit.set_plot_kets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Choose which kets to plot. Plotting too many kets may lead to performance issues.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plot_kets</strong> – A list of kets to plot. The followings are supported.</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>‘G’: Ground (+z)</li>
+<li>‘E’: Excited (-z)</li>
+<li>‘P’: (+x)</li>
+<li>‘P_I’: (+y)</li>
+<li>‘M’: (-x)</li>
+<li>‘M_I’: (-y)</li>
+</ul>
+<p>For example, to plot the ground state and the excited state, pass in [‘G’, ‘E’].</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Fancy Qubits.</a><ul>
+<li><a class="reference internal" href="#sfqfancyqubit">SfqFancyQubit</a></li>
+<li><a class="reference internal" href="#sfq2levelfancyqubit">Sfq2LevelFancyQubit</a></li>
+<li><a class="reference internal" href="#sfq3levelfancyqubit">Sfq3LevelFancyQubit</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="Qubit.html" title="previous chapter">Qubit.</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/FancyQubit.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Kangbo Li.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/FancyQubit.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
