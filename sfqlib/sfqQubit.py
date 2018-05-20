@@ -170,8 +170,8 @@ class Sfq3LevelQubit(SfqQubit):
 
         eps = array([[0.0, -1.0, 0.0], [1.0, 0.0, -sqrt(2.0)],
                      [0.0, sqrt(2.0), 0.0]], dtype=complex64)
-        self.u_sfq = pow(eps, 2) / 3.0 * (cosh(sqrt(3.0) * d_theta/2.0) - 1.0) + \
-           eps / (sqrt(3.0)) * 1.0j * sinh(sqrt(3.0) * d_theta/2.0) + eye(3, dtype=complex64)
+        self.u_sfq = pow(eps, 2) / 3.0 * (cosh(sqrt(3.0) * (-1.0j) * d_theta/2.0) - 1.0) + \
+           eps / (sqrt(3.0)) * 1.0j * sinh(sqrt(3.0) * (-1.0j) * d_theta/2.0) + eye(3, dtype=complex64)
 
         self.u = array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=complex128)
         self.ideal_gate = array([[cos(self.theta/2), -sin(self.theta/2), 0],
