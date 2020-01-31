@@ -1,5 +1,7 @@
 #+OPTIONS: toc:nil
 #+attr_html: :width 800px
+
+This Repository is Obsolete. The meat of the project is in a private Repo. Please email kangbo.io@icloud.com if you need access.
 [[./demo.png]]
 * Installation
    The code is developed in =python2=, but =python3= should not be a problem.
